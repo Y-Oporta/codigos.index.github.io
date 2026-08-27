@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lector de Códigos de Barra</title>
+  <title>Inventario & Lector de Códigos</title>
   <style>
     * {
       box-sizing: border-box;
@@ -14,38 +14,38 @@
 
     body {
       background-color: #f2f2f7;
+      color: #1c1c1e;
       display: flex;
       justify-content: center;
-      align-items: center;
+      padding: 20px 10px;
       min-height: 100vh;
-      padding: 20px;
     }
 
     .container {
       background: #ffffff;
-      padding: 25px;
+      padding: 20px;
       border-radius: 16px;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
       width: 100%;
-      max-width: 480px;
-      text-align: center;
+      max-width: 500px;
     }
 
     h1 {
       font-size: 1.4rem;
-      color: #1c1c1e;
-      margin-bottom: 20px;
-      font-weight: 600;
+      text-align: center;
+      margin-bottom: 15px;
+      color: #007aff;
     }
 
+    /* Video Scanner Box */
     .video-wrapper {
       position: relative;
       width: 100%;
-      height: 280px;
+      height: 220px;
       background-color: #000;
       border-radius: 12px;
       overflow: hidden;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
 
     video {
@@ -65,16 +65,17 @@
       box-shadow: 0 0 10px #ff3b30;
     }
 
-    .controls {
+    /* Controls & Buttons */
+    .btn-group {
       display: flex;
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 10px;
+      margin-bottom: 15px;
     }
 
     button, label.btn-file {
       flex: 1;
-      padding: 14px;
-      font-size: 0.95rem;
+      padding: 12px;
+      font-size: 0.9rem;
       font-weight: 600;
       border: none;
       border-radius: 10px;
@@ -82,75 +83,156 @@
       color: #ffffff;
       text-align: center;
       -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.2s;
     }
 
-    #btn-toggle {
-      background-color: #007aff;
+    button:active, label.btn-file:active {
+      opacity: 0.8;
     }
 
-    #btn-toggle:active {
-      background-color: #0056b3;
-    }
+    .btn-primary { background-color: #007aff; }
+    .btn-danger { background-color: #ff3b30; }
+    .btn-secondary { background-color: #8e8e93; }
+    .btn-success { background-color: #34c759; }
 
-    .btn-file {
-      background-color: #8e8e93;
-      display: inline-block;
-      line-height: 1.2;
-    }
-
-    .btn-file:active {
-      background-color: #636366;
-    }
-
-    input[type="file"] {
-      display: none;
-    }
-
-    .result-box {
-      background: #f2f2f7;
+    /* Formulario del Producto */
+    .card {
+      background: #f9f9fb;
+      border: 1px solid #e5e5ea;
       padding: 15px;
-      border-radius: 10px;
-      word-break: break-all;
+      border-radius: 12px;
+      margin-bottom: 20px;
     }
 
-    .result-box span {
-      display: block;
-      font-size: 0.85rem;
-      color: #8e8e93;
-      margin-bottom: 6px;
-    }
-
-    #result-text {
+    .card h2 {
       font-size: 1.1rem;
-      font-weight: 600;
-      color: #34c759;
+      margin-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      color: #6c6c70;
+      margin-bottom: 4px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #c7c7cc;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: #007aff;
+    }
+
+    /* Tabla de Inventario */
+    .table-wrapper {
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #e5e5ea;
+    }
+
+    th {
+      background-color: #f2f2f7;
+      color: #6c6c70;
+    }
+
+    .action-btn {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      margin-right: 2px;
+    }
+
+    .badge-code {
+      font-family: monospace;
+      background: #e5e5ea;
+      padding: 2px 6px;
+      border-radius: 4px;
     }
   </style>
-  <!-- Librería ZXing -->
   <script src="https://unpkg.com/@zxing/library@latest"></script>
 </head>
 <body>
 
   <div class="container">
-    <h1>Lector de Códigos de Barra</h1>
+    <h1>📦 Lector & Inventario</h1>
 
+    <!-- Visor de Cámara -->
     <div class="video-wrapper">
-      <!-- Imprecindible para iOS: autoplay, playsinline y muted -->
       <video id="video" autoplay playsinline muted></video>
       <div class="overlay"></div>
     </div>
 
-    <div class="controls">
-      <button id="btn-toggle">Iniciar Cámara</button>
-      <label class="btn-file">
-        Subir Imagen
-        <input type="file" id="file-input" accept="image/*">
-      </label>
+    <!-- Botones Principales -->
+    <div class="btn-group">
+      <button id="btn-toggle" class="btn-primary">Iniciar Cámara</button>
+      <button id="btn-export" class="btn-secondary">Exportar Data</button>
     </div>
 
-    <div class="result-box">
-      <span>Resultado detectado:</span>
-      <p id="result-text">Esperando escaneo...</p>
+    <!-- Tarjeta de Producto (Escaneado o Nuevo) -->
+    <div class="card" id="product-card">
+      <h2 id="card-title">Resultado del Escaneo</h2>
+      <div class="form-group">
+        <label for="code-input">Código de Barras</label>
+        <input type="text" id="code-input" placeholder="Esperando código..." readonly>
+      </div>
+      <div class="form-group">
+        <label for="name-input">Nombre del Producto</label>
+        <input type="text" id="name-input" placeholder="Ej. Galletas de Chocolate">
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <div class="form-group" style="flex: 1;">
+          <label for="price-input">Precio ($)</label>
+          <input type="number" id="price-input" step="0.01" placeholder="0.00">
+        </div>
+        <div class="form-group" style="flex: 1;">
+          <label for="stock-input">Stock</label>
+          <input type="number" id="stock-input" placeholder="0">
+        </div>
+      </div>
+      <button id="btn-save" class="btn-success" style="width: 100%; margin-top: 5px;">Guardar en Inventario</button>
+    </div>
+
+    <!-- Tabla de Productos Registrados -->
+    <div class="card">
+      <h2>Productos en Inventario (<span id="total-count">0</span>)</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Producto</th>
+              <th>Precio</th>
+              <th>Stock</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="inventory-list">
+            <!-- Se llena dinámicamente -->
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -158,13 +240,25 @@
     const codeReader = new ZXing.BrowserMultiFormatReader();
     const videoElement = document.getElementById('video');
     const btnToggle = document.getElementById('btn-toggle');
-    const fileInput = document.getElementById('file-input');
-    const resultText = document.getElementById('result-text');
+    const btnSave = document.getElementById('btn-save');
+    const btnExport = document.getElementById('btn-export');
+    
+    // Inputs del Formulario
+    const codeInput = document.getElementById('code-input');
+    const nameInput = document.getElementById('name-input');
+    const priceInput = document.getElementById('price-input');
+    const stockInput = document.getElementById('stock-input');
+    const inventoryList = document.getElementById('inventory-list');
+    const totalCount = document.getElementById('total-count');
 
     let isScanning = false;
     let audioCtx = null;
+    let inventory = JSON.parse(localStorage.getItem('my_inventory')) || {};
 
-    // Inicialización del audio requerida por políticas de iOS Safari
+    // Cargar inventario guardado al iniciar
+    renderInventory();
+
+    // Inicializar Audio para iOS
     function initAudio() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -174,28 +268,25 @@
       }
     }
 
+    // Escáner de Cámara
     async function startScanner() {
       initAudio();
-      
       try {
-        // Solicita la cámara trasera de manera flexible
-        const constraints = {
-          video: { facingMode: "environment" }
-        };
-
+        const constraints = { video: { facingMode: "environment" } };
         await codeReader.decodeFromConstraints(constraints, 'video', (result, err) => {
           if (result) {
-            resultText.textContent = result.getText();
+            const scannedCode = result.getText();
+            codeInput.value = scannedCode;
             playBeep();
+            processScannedCode(scannedCode);
           }
         });
 
         isScanning = true;
         btnToggle.textContent = 'Detener Cámara';
-        btnToggle.style.backgroundColor = '#ff3b30';
+        btnToggle.className = 'btn-danger';
       } catch (err) {
-        console.error("Error de cámara:", err);
-        alert("Error al abrir cámara: " + err.message + "\nAsegúrate de estar navegando mediante HTTPS.");
+        alert("Error de cámara: " + err.message + "\nAsegúrate de usar conexión HTTPS.");
       }
     }
 
@@ -203,55 +294,126 @@
       codeReader.reset();
       isScanning = false;
       btnToggle.textContent = 'Iniciar Cámara';
-      btnToggle.style.backgroundColor = '#007aff';
+      btnToggle.className = 'btn-primary';
     }
 
     btnToggle.addEventListener('click', () => {
-      if (isScanning) {
-        stopScanner();
+      isScanning ? stopScanner() : startScanner();
+    });
+
+    // Buscar si el producto ya existe en el inventario local
+    function processScannedCode(code) {
+      if (inventory[code]) {
+        // Si existe, cargar datos
+        nameInput.value = inventory[code].name;
+        priceInput.value = inventory[code].price;
+        stockInput.value = inventory[code].stock;
+        document.getElementById('card-title').textContent = '✅ Producto Encontrado';
       } else {
-        startScanner();
+        // Si no existe, preparar para crear
+        nameInput.value = '';
+        priceInput.value = '';
+        stockInput.value = '';
+        document.getElementById('card-title').textContent = '🆕 Nuevo Producto';
       }
-    });
+    }
 
-    fileInput.addEventListener('change', async (e) => {
-      initAudio();
-      const file = e.target.files[0];
-      if (!file) return;
+    // Guardar / Actualizar en localStorage
+    btnSave.addEventListener('click', () => {
+      const code = codeInput.value.trim();
+      const name = nameInput.value.trim();
+      const price = parseFloat(priceInput.value) || 0;
+      const stock = parseInt(stockInput.value) || 0;
 
-      if (isScanning) stopScanner();
+      if (!code) {
+        alert("Primero debes escanear un código de barras.");
+        return;
+      }
+      if (!name) {
+        alert("Por favor ingresa el nombre del producto.");
+        return;
+      }
 
-      const imgElement = document.createElement('img');
-      imgElement.src = URL.createObjectURL(file);
+      // Guardar en objeto inventario
+      inventory[code] = { name, price, stock };
       
-      imgElement.onload = async () => {
-        try {
-          const result = await codeReader.decodeFromImageElement(imgElement);
-          resultText.textContent = result.getText();
-          playBeep();
-        } catch (err) {
-          resultText.textContent = "No se detectó ningún código en la imagen.";
-        }
-      };
+      // Persistir en LocalStorage
+      localStorage.setItem('my_inventory', JSON.stringify(inventory));
+      
+      renderInventory();
+      alert("¡Producto guardado correctamente!");
+
+      // Resetear campos
+      codeInput.value = '';
+      nameInput.value = '';
+      priceInput.value = '';
+      stockInput.value = '';
+      document.getElementById('card-title').textContent = 'Resultado del Escaneo';
     });
 
+    // Renderizar lista completa
+    function renderInventory() {
+      inventoryList.innerHTML = '';
+      const keys = Object.keys(inventory);
+      totalCount.textContent = keys.length;
+
+      keys.forEach(code => {
+        const item = inventory[code];
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><span class="badge-code">${code}</span></td>
+          <td>${item.name}</td>
+          <td>$${item.price.toFixed(2)}</td>
+          <td><strong>${item.stock}</strong></td>
+          <td>
+            <button class="action-btn btn-primary" onclick="editProduct('${code}')">✏️</button>
+            <button class="action-btn btn-danger" onclick="deleteProduct('${code}')">🗑️</button>
+          </td>
+        `;
+        inventoryList.appendChild(row);
+      });
+    }
+
+    // Cargar producto desde la tabla para editar
+    window.editProduct = function(code) {
+      codeInput.value = code;
+      processScannedCode(code);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Eliminar producto
+    window.deleteProduct = function(code) {
+      if (confirm(`¿Seguro que deseas eliminar "${inventory[code].name}"?`)) {
+        delete inventory[code];
+        localStorage.setItem('my_inventory', JSON.stringify(inventory));
+        renderInventory();
+      }
+    };
+
+    // Exportar inventario en formato JSON
+    btnExport.addEventListener('click', () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(inventory, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `inventario_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    });
+
+    // Tono Beep
     function playBeep() {
       if (!audioCtx) return;
-      
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(900, audioCtx.currentTime);
       gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      
       osc.connect(gain);
       gain.connect(audioCtx.destination);
-      
       osc.start();
-      osc.stop(audioCtx.currentTime + 0.15);
+      osc.stop(audioCtx.currentTime + 0.12);
     }
   </script>
-
 </body>
 </html>
