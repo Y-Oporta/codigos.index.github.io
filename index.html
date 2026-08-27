@@ -2,860 +2,500 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>BARRA — Inventario por código de barras</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventario · Manifiesto de bodega</title>
+
+<!-- Fuentes -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/@zxing/library@latest"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Cliente de Supabase (habla con la base de datos vía REST) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Librería para leer códigos de barras con la cámara -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
 <style>
   :root{
-    --ink:#EDEAE2;
-    --ink-dim:#8B8F98;
-    --bg:#15171C;
-    --panel:#1C1F26;
-    --panel-2:#232730;
-    --line:#2E323C;
-    --orange:#FF7A1A;
-    --orange-dim:#FF7A1A33;
-    --green:#3DDC84;
-    --green-dim:#3DDC8422;
-    --red:#FF4D4D;
-    --red-dim:#FF4D4D22;
-    --radius:14px;
-    --mono:'JetBrains Mono', ui-monospace, monospace;
-    --display:'Space Grotesk', system-ui, sans-serif;
+    --bg: #EDEFF1;
+    --surface: #FFFFFF;
+    --ink: #1F2430;
+    --ink-soft: #5B6472;
+    --navy: #1B2A45;
+    --orange: #FF6B35;
+    --green: #2E7D32;
+    --red: #D64550;
+    --line: #C9CDD3;
   }
-  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;}
+
+  *{ box-sizing: border-box; }
+
   body{
-    background:var(--bg);
-    color:var(--ink);
-    font-family:var(--mono);
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    padding:0 0 40px;
-  }
-  .app{
-    width:100%;
-    max-width:560px;
-    min-height:100vh;
-    background:var(--bg);
-    display:flex;
-    flex-direction:column;
-    position:relative;
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    padding-bottom: 60px;
   }
 
-  /* ---------- Barcode stripe texture, the signature motif ---------- */
-  .stripes{
-    display:flex;
-    align-items:stretch;
-    height:100%;
-    gap:2px;
-  }
-  .stripes i{ display:block; background:currentColor; }
-
-  .brand-mark{
-    width:34px; height:34px; color:var(--orange); flex-shrink:0;
-  }
-  .brand-mark .stripes i:nth-child(1){width:3px;}
-  .brand-mark .stripes i:nth-child(2){width:1px;}
-  .brand-mark .stripes i:nth-child(3){width:2px;}
-  .brand-mark .stripes i:nth-child(4){width:1px;}
-  .brand-mark .stripes i:nth-child(5){width:3px;}
-  .brand-mark .stripes i:nth-child(6){width:1px;}
-  .brand-mark .stripes i:nth-child(7){width:2px;}
-  .brand-mark .stripes i:nth-child(8){width:2px;}
-
-  .divider-barcode{
-    height:10px;
-    display:flex;
-    gap:2px;
-    opacity:.5;
-    color:var(--line);
-    margin:0 20px;
-  }
-
-  /* ---------- Header ---------- */
+  /* ---------- Encabezado estilo etiqueta de embarque ---------- */
   header{
-    padding:22px 20px 16px;
-    display:flex;
-    align-items:center;
-    gap:12px;
-    border-bottom:1px solid var(--line);
-    position:sticky; top:0;
-    background:rgba(21,23,28,.92);
-    backdrop-filter:blur(8px);
-    z-index:20;
+    position: relative;
+    background: var(--navy);
+    color: #fff;
+    padding: 28px 20px 22px;
+    overflow: hidden;
   }
+  header::before{
+    content:"";
+    position:absolute; inset:0;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,.10) 0 2px,
+      transparent 2px 5px,
+      rgba(255,255,255,.10) 5px 6px,
+      transparent 6px 11px,
+      rgba(255,255,255,.10) 11px 14px,
+      transparent 14px 20px
+    );
+    opacity:.5;
+  }
+  header .content{ position:relative; max-width: 900px; margin:0 auto; }
   header h1{
-    font-family:var(--display);
-    font-size:1.15rem;
-    letter-spacing:.04em;
-    font-weight:700;
-    color:var(--ink);
+    font-family:'Archivo Black', sans-serif;
+    font-size: clamp(28px, 5vw, 42px);
+    letter-spacing: 1px;
+    margin: 0 0 4px;
   }
   header p{
-    font-size:.72rem;
-    color:var(--ink-dim);
-    margin-top:2px;
-    letter-spacing:.03em;
+    margin:0;
+    font-family:'Space Mono', monospace;
+    font-size: 13px;
+    color: #C9D3E0;
+    letter-spacing: .5px;
   }
 
-  /* ---------- Tabs ---------- */
-  nav.tabs{
-    display:flex;
-    padding:14px 20px 0;
-    gap:8px;
-  }
-  nav.tabs button{
-    flex:1;
-    background:var(--panel);
-    border:1px solid var(--line);
-    color:var(--ink-dim);
-    font-family:var(--display);
-    font-weight:600;
-    font-size:.82rem;
-    letter-spacing:.02em;
-    padding:11px 8px;
-    border-radius:10px 10px 0 0;
-    cursor:pointer;
-    transition:.15s;
-  }
-  nav.tabs button.active{
-    color:var(--bg);
-    background:var(--orange);
-    border-color:var(--orange);
+  main{
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 20px;
+    display: grid;
+    gap: 24px;
   }
 
-  main{ flex:1; padding:18px 20px 10px; }
-  section.view{ display:none; animation:fade .25s ease; }
-  section.view.active{ display:block; }
-  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
-
-  /* ---------- Scanner ---------- */
-  .scan-box{
-    position:relative;
-    width:100%;
-    aspect-ratio:4/3;
-    background:#000;
-    border-radius:var(--radius);
-    overflow:hidden;
-    border:1px solid var(--line);
-  }
-  .scan-box video{ width:100%; height:100%; object-fit:cover; display:block; }
-  .scan-box .laser{
-    position:absolute; left:6%; right:6%; top:50%;
-    height:2px; background:var(--red);
-    box-shadow:0 0 12px 1px var(--red);
-    animation:sweep 2.1s ease-in-out infinite;
-  }
-  @keyframes sweep{
-    0%,100%{ top:26%; opacity:.9;}
-    50%{ top:74%; opacity:.4;}
-  }
-  .scan-box .frame{
-    position:absolute; inset:14%;
-    border:2px solid #ffffff55;
-    border-radius:10px;
-    pointer-events:none;
-  }
-  .scan-box .frame::before,.scan-box .frame::after,
-  .scan-box .frame i::before,.scan-box .frame i::after{ content:''; }
-  .scan-box .hint{
-    position:absolute; bottom:10px; left:0; right:0;
-    text-align:center;
-    font-size:.68rem;
-    color:#ffffffb0;
-    letter-spacing:.05em;
-  }
-  .scan-box.idle::before{
-    content:'CÁMARA EN ESPERA';
-    position:absolute; inset:0;
-    display:flex; align-items:center; justify-content:center;
-    color:var(--ink-dim);
-    font-size:.75rem;
-    letter-spacing:.08em;
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px;
   }
 
-  .controls{
-    display:flex;
-    gap:10px;
-    margin-top:14px;
+  .card h2{
+    font-family:'Archivo Black', sans-serif;
+    font-size: 15px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--line);
+    color: var(--navy);
   }
-  button.btn, label.btn{
-    flex:1;
-    padding:14px 10px;
-    font-family:var(--display);
-    font-weight:600;
-    font-size:.86rem;
-    border-radius:10px;
-    border:1px solid transparent;
-    cursor:pointer;
-    text-align:center;
-    display:flex; align-items:center; justify-content:center; gap:6px;
-    transition:.15s;
-  }
-  .btn-primary{ background:var(--orange); color:#181109; }
-  .btn-primary:active{ transform:scale(.98); }
-  .btn-primary.stop{ background:var(--red); color:#fff; }
-  .btn-secondary{ background:var(--panel-2); color:var(--ink); border-color:var(--line); }
-  .btn-secondary:active{ transform:scale(.98); }
-  input[type="file"]{ display:none; }
 
-  /* ---------- Ticket / result ---------- */
-  .ticket{
-    margin-top:18px;
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    overflow:hidden;
+  /* ---------- Configuración ---------- */
+  #config-warning{
+    background:#FFF4ED;
+    border:1px solid var(--orange);
+    color:#9A3B12;
+    font-size: 13px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    margin-bottom: 20px;
     display:none;
   }
-  .ticket.show{ display:block; animation:fade .25s ease; }
-  .ticket-head{
-    padding:14px 16px;
-    display:flex; align-items:center; justify-content:space-between;
-    gap:10px;
+  #config-warning code{ background:#fff; padding:1px 5px; border-radius:3px; }
+
+  /* ---------- Escáner ---------- */
+  #reader{
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto 14px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--line);
   }
-  .ticket-head .status{
-    font-family:var(--display);
-    font-weight:700;
-    font-size:.78rem;
-    letter-spacing:.06em;
-    padding:5px 10px;
-    border-radius:20px;
+  .scanner-actions{
+    display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom: 18px;
   }
-  .status.found{ background:var(--green-dim); color:var(--green); }
-  .status.new{ background:var(--orange-dim); color:var(--orange); }
-  .ticket-head .code{ font-size:.72rem; color:var(--ink-dim); }
-  .ticket-barcode{
-    height:26px; display:flex; gap:1.5px; margin:0 16px 2px; color:var(--ink);
-    opacity:.85;
+
+  .form-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
   }
-  .ticket-body{ padding:14px 16px 16px; }
-  .ticket-body .name{
-    font-family:var(--display); font-size:1.05rem; font-weight:700; margin-bottom:10px;
+  .form-grid .full{ grid-column: 1 / -1; }
+
+  label{
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    display:block;
+    margin-bottom: 5px;
   }
-  .kv{ display:flex; justify-content:space-between; font-size:.82rem; padding:6px 0; border-top:1px dashed var(--line); }
-  .kv span:first-child{ color:var(--ink-dim); }
-  .qty-row{ display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
-  .qty-row .qty-label{ font-size:.72rem; color:var(--ink-dim); letter-spacing:.05em; }
-  .qty-controls{ display:flex; align-items:center; gap:10px; }
+
+  input{
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    background: #FBFBFC;
+  }
+  input:focus{ outline: 2px solid var(--orange); outline-offset: 1px; }
+
+  button{
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    border-radius: 5px;
+    padding: 11px 18px;
+    cursor: pointer;
+    transition: transform .05s ease, opacity .15s ease;
+  }
+  button:active{ transform: scale(.97); }
+  button:disabled{ opacity:.5; cursor:not-allowed; }
+
+  .btn-primary{ background: var(--navy); color:#fff; }
+  .btn-scan{ background: var(--orange); color:#fff; }
+  .btn-stop{ background: var(--ink-soft); color:#fff; }
+  .btn-danger{ background: var(--red); color:#fff; }
+  .btn-full{ width: 100%; margin-top: 14px; }
+
+  /* ---------- Lista / manifiesto ---------- */
+  .summary{
+    display:flex; justify-content: space-between; align-items:baseline;
+    margin-bottom: 4px;
+  }
+  .summary .count{
+    font-family:'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  table{ width:100%; border-collapse: collapse; margin-top: 10px; }
+  thead th{
+    text-align:left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--ink-soft);
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  tbody tr{ border-bottom: 1px dashed var(--line); }
+  tbody tr:last-child{ border-bottom: none; }
+  tbody td{ padding: 10px 6px; font-size: 14px; vertical-align: middle; }
+  td.mono{ font-family:'Space Mono', monospace; font-size: 13px; }
+  td.qty{ font-family:'Space Mono', monospace; font-weight:700; }
+
+  .qty-controls{ display:flex; align-items:center; gap:8px; }
   .qty-controls button{
-    width:34px; height:34px; border-radius:8px; border:1px solid var(--line);
-    background:var(--panel-2); color:var(--ink); font-size:1.1rem; cursor:pointer; font-family:var(--mono);
+    width: 26px; height: 26px; padding:0;
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    font-size: 15px; line-height: 1;
   }
-  .qty-controls button:active{ transform:scale(.92); }
-  .qty-controls .num{ font-family:var(--display); font-weight:700; font-size:1.2rem; min-width:32px; text-align:center; }
-  .ticket-actions{ display:flex; gap:8px; margin-top:14px; }
-  .ticket-actions button{ flex:1; padding:11px; border-radius:9px; font-size:.78rem; font-family:var(--display); font-weight:600; cursor:pointer; border:1px solid var(--line); background:var(--panel-2); color:var(--ink); }
-  .ticket-actions button.danger{ color:var(--red); border-color:var(--red-dim); }
-  .ticket-actions button.again{ background:var(--orange); color:#181109; border-color:var(--orange); }
 
-  /* quick add form inside ticket for new codes */
-  .qform label{ display:block; font-size:.68rem; letter-spacing:.05em; color:var(--ink-dim); margin:10px 0 5px; }
-  .qform input, .qform select, .qform textarea{
-    width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--ink);
-    padding:10px 12px; border-radius:8px; font-family:var(--mono); font-size:.88rem;
+  .row-delete{
+    background: transparent;
+    color: var(--red);
+    border: 1px solid var(--red);
+    padding: 6px 10px;
+    font-size: 12px;
   }
-  .qform textarea{ resize:vertical; min-height:50px; }
-  .qform .row2{ display:flex; gap:10px; }
-  .qform .row2 > div{ flex:1; }
 
-  /* ---------- Inventory list ---------- */
-  .search-wrap{ position:relative; margin-bottom:14px; }
-  .search-wrap input{
-    width:100%; background:var(--panel); border:1px solid var(--line); color:var(--ink);
-    padding:12px 14px; border-radius:10px; font-family:var(--mono); font-size:.86rem;
+  .empty-state{
+    text-align:center;
+    padding: 30px 10px;
+    color: var(--ink-soft);
+    font-size: 14px;
   }
-  .search-wrap input::placeholder{ color:var(--ink-dim); }
 
-  .inv-summary{ display:flex; gap:10px; margin-bottom:14px; }
-  .inv-summary .stat{
-    flex:1; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+  #status-msg{
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    text-align:center;
+    color: var(--ink-soft);
+    margin-top: 6px;
+    min-height: 16px;
   }
-  .inv-summary .stat b{ display:block; font-family:var(--display); font-size:1.2rem; }
-  .inv-summary .stat span{ font-size:.66rem; color:var(--ink-dim); letter-spacing:.04em; }
+  #status-msg.error{ color: var(--red); }
+  #status-msg.ok{ color: var(--green); }
 
-  .item-card{
-    background:var(--panel); border:1px solid var(--line); border-radius:12px;
-    padding:12px 14px; margin-bottom:10px; cursor:pointer;
-    display:flex; align-items:center; gap:12px;
-  }
-  .item-card:active{ background:var(--panel-2); }
-  .item-card .mini-bars{ width:20px; height:30px; display:flex; gap:1.5px; color:var(--ink-dim); flex-shrink:0; }
-  .item-card .info{ flex:1; min-width:0; }
-  .item-card .info .top{ display:flex; justify-content:space-between; gap:8px; }
-  .item-card .info .name{ font-family:var(--display); font-weight:600; font-size:.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .item-card .info .qty{ font-family:var(--display); font-weight:700; color:var(--orange); font-size:.92rem; flex-shrink:0; }
-  .item-card .info .meta{ font-size:.68rem; color:var(--ink-dim); margin-top:3px; display:flex; gap:8px; }
-  .badge{ background:var(--panel-2); border:1px solid var(--line); border-radius:20px; padding:1px 8px; }
-
-  .empty{
-    text-align:center; padding:50px 20px; color:var(--ink-dim);
-  }
-  .empty .mini-bars{ width:48px; height:48px; margin:0 auto 14px; display:flex; gap:2px; color:var(--line); }
-  .empty p{ font-size:.8rem; line-height:1.5; }
-
-  /* ---------- Modal ---------- */
-  .modal-backdrop{
-    position:fixed; inset:0; background:#000000aa; display:none;
-    align-items:flex-end; justify-content:center; z-index:50;
-  }
-  .modal-backdrop.show{ display:flex; }
-  .modal{
-    width:100%; max-width:560px; background:var(--panel); border-radius:18px 18px 0 0;
-    padding:18px 20px 26px; max-height:88vh; overflow-y:auto;
-    border-top:1px solid var(--line);
-    animation:slideup .22s ease;
-  }
-  @keyframes slideup{ from{transform:translateY(16px); opacity:0;} to{transform:none; opacity:1;} }
-  .modal-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
-  .modal-head h3{ font-family:var(--display); font-size:1rem; }
-  .modal-head button{ background:none; border:none; color:var(--ink-dim); font-size:1.3rem; cursor:pointer; line-height:1;}
-  .modal-actions{ display:flex; gap:10px; margin-top:16px; }
-  .modal-actions button{ flex:1; padding:13px; border-radius:9px; font-family:var(--display); font-weight:600; font-size:.85rem; cursor:pointer; border:1px solid var(--line); }
-  .modal-actions .save{ background:var(--orange); color:#181109; border-color:var(--orange); }
-  .modal-actions .cancel{ background:var(--panel-2); color:var(--ink); }
-  .modal-actions .delete{ background:var(--red-dim); color:var(--red); border-color:var(--red-dim); flex:0 0 auto; width:46px; }
-
-  /* ---------- Toast ---------- */
-  .toast{
-    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(10px);
-    background:var(--panel-2); border:1px solid var(--line); color:var(--ink);
-    padding:11px 18px; border-radius:30px; font-size:.8rem; z-index:60;
-    opacity:0; pointer-events:none; transition:.25s;
-    display:flex; align-items:center; gap:8px;
-  }
-  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
-  .toast .dot{ width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; }
-  .toast.error .dot{ background:var(--red); }
-
-  ::selection{ background:var(--orange); color:#181109; }
-
-  @media (prefers-reduced-motion: reduce){
-    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  @media (max-width: 520px){
+    .form-grid{ grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
-<div class="app">
 
-  <header>
-    <div class="brand-mark">
-      <div class="stripes"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-    </div>
-    <div>
-      <h1>BARRA</h1>
-      <p>Escanea un código · consulta o registra el artículo</p>
-    </div>
-  </header>
-
-  <nav class="tabs">
-    <button class="active" data-tab="scan">Escanear</button>
-    <button data-tab="inv">Inventario</button>
-  </nav>
-
-  <main>
-    <!-- ================= SCAN VIEW ================= -->
-    <section class="view active" id="view-scan">
-
-      <div class="scan-box idle" id="scanBox">
-        <video id="video" autoplay playsinline muted></video>
-        <div class="laser" id="laser" style="display:none"></div>
-        <div class="frame" id="frame" style="display:none"></div>
-      </div>
-
-      <div class="controls">
-        <button class="btn btn-primary" id="btnToggle">Iniciar cámara</button>
-        <label class="btn btn-secondary" for="fileInput">Subir imagen</label>
-        <input type="file" id="fileInput" accept="image/*">
-      </div>
-
-      <!-- Result ticket -->
-      <div class="ticket" id="ticket">
-        <div class="ticket-head">
-          <span class="status" id="ticketStatus">—</span>
-          <span class="code" id="ticketCode">—</span>
-        </div>
-        <div class="ticket-barcode" id="ticketBars"></div>
-
-        <div class="ticket-body" id="ticketBodyFound" style="display:none">
-          <div class="name" id="foundName">—</div>
-          <div class="kv"><span>Cantidad</span><span id="foundQtyText">0</span></div>
-          <div class="kv"><span>Categoría</span><span id="foundCat">—</span></div>
-          <div class="kv"><span>Ubicación</span><span id="foundLoc">—</span></div>
-          <div class="kv"><span>Notas</span><span id="foundNotes">—</span></div>
-          <div class="kv"><span>Últ. escaneo</span><span id="foundLast">—</span></div>
-
-          <div class="qty-row">
-            <span class="qty-label">AJUSTAR STOCK</span>
-            <div class="qty-controls">
-              <button id="qtyMinus">−</button>
-              <span class="num" id="qtyNum">0</span>
-              <button id="qtyPlus">+</button>
-            </div>
-          </div>
-
-          <div class="ticket-actions">
-            <button class="again" id="btnScanAgain">Escanear otro</button>
-            <button id="btnEditFound">Editar</button>
-            <button class="danger" id="btnDeleteFound">Eliminar</button>
-          </div>
-        </div>
-
-        <div class="ticket-body qform" id="ticketBodyNew" style="display:none">
-          <div class="name" style="margin-bottom:0;">Código nuevo — no está en tu inventario</div>
-          <label>Nombre del artículo *</label>
-          <input type="text" id="newName" placeholder="Ej. Cable USB-C 1m">
-          <div class="row2">
-            <div>
-              <label>Cantidad inicial</label>
-              <input type="number" id="newQty" value="1" min="0">
-            </div>
-            <div>
-              <label>Categoría</label>
-              <input type="text" id="newCat" list="catList" placeholder="Ej. Electrónica">
-              <datalist id="catList">
-                <option value="Electrónica"></option>
-                <option value="Alimentos"></option>
-                <option value="Ropa"></option>
-                <option value="Herramientas"></option>
-                <option value="Oficina"></option>
-                <option value="Otros"></option>
-              </datalist>
-            </div>
-          </div>
-          <label>Ubicación</label>
-          <input type="text" id="newLoc" placeholder="Ej. Estante 3 / Bodega A">
-          <label>Notas</label>
-          <textarea id="newNotes" placeholder="Detalles adicionales..."></textarea>
-
-          <div class="ticket-actions">
-            <button class="again" id="btnSaveNew">Guardar en inventario</button>
-            <button id="btnDiscardNew">Descartar</button>
-          </div>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- ================= INVENTORY VIEW ================= -->
-    <section class="view" id="view-inv">
-      <div class="search-wrap">
-        <input type="text" id="searchInput" placeholder="Buscar por nombre, código o categoría…">
-      </div>
-
-      <div class="inv-summary">
-        <div class="stat"><b id="statCount">0</b><span>ARTÍCULOS</span></div>
-        <div class="stat"><b id="statUnits">0</b><span>UNIDADES TOTALES</span></div>
-      </div>
-
-      <div id="invList"></div>
-
-      <div class="empty" id="invEmpty" style="display:none">
-        <div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        <p>Aún no has registrado artículos.<br>Escanea un código en la pestaña <b>Escanear</b> para empezar.</p>
-      </div>
-    </section>
-  </main>
-</div>
-
-<!-- Edit modal -->
-<div class="modal-backdrop" id="modalBackdrop">
-  <div class="modal">
-    <div class="modal-head">
-      <h3>Editar artículo</h3>
-      <button id="modalClose">✕</button>
-    </div>
-    <div class="qform" style="padding:0">
-      <label>Código</label>
-      <input type="text" id="editCode" disabled>
-      <label>Nombre *</label>
-      <input type="text" id="editName">
-      <div class="row2">
-        <div>
-          <label>Cantidad</label>
-          <input type="number" id="editQty" min="0">
-        </div>
-        <div>
-          <label>Categoría</label>
-          <input type="text" id="editCat" list="catList">
-        </div>
-      </div>
-      <label>Ubicación</label>
-      <input type="text" id="editLoc">
-      <label>Notas</label>
-      <textarea id="editNotes"></textarea>
-    </div>
-    <div class="modal-actions">
-      <button class="delete" id="modalDelete">🗑</button>
-      <button class="cancel" id="modalCancel">Cancelar</button>
-      <button class="save" id="modalSave">Guardar</button>
-    </div>
+<header>
+  <div class="content">
+    <h1>INVENTARIO</h1>
+    <p>MANIFIESTO DE BODEGA · PRACTICA CON SUPABASE</p>
   </div>
-</div>
+</header>
 
-<div class="toast" id="toast"><span class="dot"></span><span id="toastMsg">Guardado</span></div>
+<main>
+
+  <div id="config-warning">
+    ⚠️ No has configurado tu conexión a Supabase. Abre este archivo con un editor de texto,
+    busca <code>SUPABASE_URL</code> y <code>SUPABASE_ANON_KEY</code> al inicio del
+    <code>&lt;script&gt;</code>, y reemplázalos por los valores de tu proyecto
+    (Settings → API en supabase.com).
+  </div>
+
+  <!-- ESCÁNER -->
+  <section class="card">
+    <h2>Escanear artículo</h2>
+    <div id="reader"></div>
+    <div class="scanner-actions">
+      <button class="btn-scan" id="btn-start-scan">Iniciar cámara</button>
+      <button class="btn-stop" id="btn-stop-scan" disabled>Detener cámara</button>
+    </div>
+
+    <form id="form-item">
+      <div class="form-grid">
+        <div class="full">
+          <label for="codigo">Código de barras</label>
+          <input type="text" id="codigo" placeholder="Escanea o escribe el código" required>
+        </div>
+        <div class="full">
+          <label for="nombre">Nombre del producto</label>
+          <input type="text" id="nombre" placeholder="Ej. Cable USB-C 1m" required>
+        </div>
+        <div>
+          <label for="cantidad">Cantidad</label>
+          <input type="number" id="cantidad" min="1" value="1" required>
+        </div>
+        <div>
+          <label for="precio">Precio</label>
+          <input type="number" id="precio" min="0" step="0.01" value="0">
+        </div>
+      </div>
+      <button type="submit" class="btn-primary btn-full">Agregar al inventario</button>
+    </form>
+    <div id="status-msg"></div>
+  </section>
+
+  <!-- LISTA -->
+  <section class="card">
+    <div class="summary">
+      <h2 style="border:none; margin:0; padding:0;">Existencias actuales</h2>
+      <span class="count" id="total-count">0 artículos</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tabla-inventario">
+      </tbody>
+    </table>
+    <div class="empty-state" id="empty-state" style="display:none;">
+      Aún no hay artículos. Escanea o agrega uno arriba.
+    </div>
+  </section>
+
+</main>
 
 <script>
-(function(){
-  "use strict";
+  /* =========================================================
+     1) CONFIGURACIÓN — reemplaza estos dos valores con los
+        de tu proyecto en Supabase (Settings > API)
+     ========================================================= */
+  const SUPABASE_URL = "https://rwqhlzjmcauzlgdmayiq.supabase.co"; // aquí iba el Project URL
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3cWhsemptY2F1emxnZG1heWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NTI5MTUsImV4cCI6MjEwMzQyODkxNX0.JokglzgtGR1vOkU5XYzxsk_k5wYHJA_mPmFNtHp0R_M"; // aquí iba la anon public key
 
-  /* ================= STATE ================= */
-  let inventory = {};          // { barcode: {barcode,name,qty,category,location,notes,createdAt,updatedAt,scans} }
-  let currentBarcode = null;   // barcode currently shown in ticket
-  let editingBarcode = null;   // barcode open in modal
-  let isScanning = false;
-  let audioCtx = null;
-  const codeReader = new ZXing.BrowserMultiFormatReader();
-
-  const STORAGE_KEY = 'inventory-data';
-
-  /* ================= DOM refs ================= */
-  const $ = (id) => document.getElementById(id);
-  const video = $('video'), scanBox = $('scanBox'), laser = $('laser'), frame = $('frame');
-  const btnToggle = $('btnToggle'), fileInput = $('fileInput');
-  const ticket = $('ticket'), ticketStatus = $('ticketStatus'), ticketCode = $('ticketCode'), ticketBars = $('ticketBars');
-  const bodyFound = $('ticketBodyFound'), bodyNew = $('ticketBodyNew');
-  const toast = $('toast'), toastMsg = $('toastMsg');
-
-  /* ================= Storage helpers ================= */
-  async function loadInventory(){
-    try{
-      const res = await window.storage.get(STORAGE_KEY, false);
-      inventory = res && res.value ? JSON.parse(res.value) : {};
-    }catch(e){
-      inventory = {};
-    }
-    renderInventoryList();
+  const NO_CONFIGURADO = SUPABASE_URL.includes("TU-PROYECTO") || SUPABASE_ANON_KEY.includes("TU_LLAVE");
+  if (NO_CONFIGURADO) {
+    document.getElementById('config-warning').style.display = 'block';
   }
 
-  async function persistInventory(){
-    try{
-      const res = await window.storage.set(STORAGE_KEY, JSON.stringify(inventory), false);
-      if(!res){ showToast('No se pudo guardar. Intenta de nuevo.', true); }
-    }catch(e){
-      showToast('Error al guardar los datos.', true);
-    }
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  /* =========================================================
+     2) ELEMENTOS DEL DOM
+     ========================================================= */
+  const tabla = document.getElementById('tabla-inventario');
+  const emptyState = document.getElementById('empty-state');
+  const totalCount = document.getElementById('total-count');
+  const statusMsg = document.getElementById('status-msg');
+  const form = document.getElementById('form-item');
+
+  function setStatus(texto, tipo) {
+    statusMsg.textContent = texto;
+    statusMsg.className = tipo || '';
   }
 
-  /* ================= Audio feedback ================= */
-  function initAudio(){
-    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if(audioCtx.state === 'suspended') audioCtx.resume();
-  }
-  function tone(freq, start, dur, vol){
-    if(!audioCtx) return;
-    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
-    gain.gain.setValueAtTime(vol, audioCtx.currentTime + start);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + dur);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(audioCtx.currentTime + start);
-    osc.stop(audioCtx.currentTime + start + dur);
-  }
-  function beepFound(){ tone(880, 0, .12, .12); }
-  function beepNew(){ tone(660, 0, .09, .12); tone(880, .12, .12, .12); }
-  function beepDelete(){ tone(440, 0, .1, .1); tone(300, .1, .12, .1); }
+  /* =========================================================
+     3) CARGAR Y DIBUJAR EL INVENTARIO (lee de Supabase)
+     ========================================================= */
+  async function cargarInventario() {
+    const { data, error } = await sb
+      .from('inventario')
+      .select('*')
+      .order('creado_en', { ascending: false });
 
-  /* ================= Barcode stripe visuals ================= */
-  function renderBars(container, count, colorful){
-    container.innerHTML = '';
-    for(let i=0;i<count;i++){
-      const bar = document.createElement('i');
-      const w = [1,1,2,1,3,1,2,1][i % 8];
-      bar.style.width = w + 'px';
-      bar.style.background = 'currentColor';
-      bar.style.opacity = (0.4 + Math.random()*0.6).toFixed(2);
-      container.appendChild(bar);
-    }
-    container.style.display = 'flex';
-  }
-
-  /* ================= Tabs ================= */
-  document.querySelectorAll('nav.tabs button').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
-      document.querySelectorAll('section.view').forEach(v=>v.classList.remove('active'));
-      btn.classList.add('active');
-      $('view-' + btn.dataset.tab).classList.add('active');
-      if(btn.dataset.tab === 'inv') renderInventoryList();
-    });
-  });
-
-  /* ================= Scanner ================= */
-  async function startScanner(){
-    initAudio();
-    try{
-      const constraints = { video: { facingMode: "environment" } };
-      await codeReader.decodeFromConstraints(constraints, 'video', (result, err)=>{
-        if(result) handleScanResult(result.getText());
-      });
-      isScanning = true;
-      scanBox.classList.remove('idle');
-      laser.style.display = 'block';
-      frame.style.display = 'block';
-      btnToggle.textContent = 'Detener cámara';
-      btnToggle.classList.add('stop');
-    }catch(err){
-      console.error(err);
-      showToast('No se pudo abrir la cámara. Verifica permisos y HTTPS.', true);
-    }
-  }
-  function stopScanner(){
-    codeReader.reset();
-    isScanning = false;
-    scanBox.classList.add('idle');
-    laser.style.display = 'none';
-    frame.style.display = 'none';
-    btnToggle.textContent = 'Iniciar cámara';
-    btnToggle.classList.remove('stop');
-  }
-  btnToggle.addEventListener('click', ()=> isScanning ? stopScanner() : startScanner());
-
-  fileInput.addEventListener('change', (e)=>{
-    initAudio();
-    const file = e.target.files[0];
-    if(!file) return;
-    if(isScanning) stopScanner();
-
-    const img = document.createElement('img');
-    img.src = URL.createObjectURL(file);
-    img.onload = async ()=>{
-      try{
-        const result = await codeReader.decodeFromImageElement(img);
-        handleScanResult(result.getText());
-      }catch(err){
-        showToast('No se detectó ningún código en la imagen.', true);
-      }
-      fileInput.value = '';
-    };
-  });
-
-  /* Pause continuous scanning once we get a hit, until user asks to scan again */
-  function handleScanResult(code){
-    if(isScanning){ codeReader.reset(); isScanning = false; scanBox.classList.add('idle'); laser.style.display='none'; frame.style.display='none'; btnToggle.textContent='Iniciar cámara'; btnToggle.classList.remove('stop'); }
-    showTicketForCode(code);
-  }
-
-  /* ================= Ticket rendering ================= */
-  function showTicketForCode(code){
-    currentBarcode = code;
-    ticket.classList.add('show');
-    ticketCode.textContent = code;
-    renderBars(ticketBars, 46);
-
-    const item = inventory[code];
-    if(item){
-      ticketStatus.textContent = 'EN INVENTARIO';
-      ticketStatus.className = 'status found';
-      bodyFound.style.display = 'block';
-      bodyNew.style.display = 'none';
-
-      item.scans = (item.scans || 0) + 1;
-      item.lastScanned = Date.now();
-      persistInventory();
-
-      $('foundName').textContent = item.name;
-      $('foundQtyText').textContent = item.qty;
-      $('foundCat').textContent = item.category || '—';
-      $('foundLoc').textContent = item.location || '—';
-      $('foundNotes').textContent = item.notes || '—';
-      $('foundLast').textContent = new Date(item.lastScanned).toLocaleString('es-ES', {dateStyle:'medium', timeStyle:'short'});
-      $('qtyNum').textContent = item.qty;
-
-      beepFound();
-    } else {
-      ticketStatus.textContent = 'CÓDIGO NUEVO';
-      ticketStatus.className = 'status new';
-      bodyFound.style.display = 'none';
-      bodyNew.style.display = 'block';
-      $('newName').value = '';
-      $('newQty').value = 1;
-      $('newCat').value = '';
-      $('newLoc').value = '';
-      $('newNotes').value = '';
-      beepNew();
-    }
-  }
-
-  $('btnScanAgain').addEventListener('click', ()=>{
-    ticket.classList.remove('show');
-    startScanner();
-  });
-
-  /* Quantity adjust from ticket */
-  $('qtyPlus').addEventListener('click', ()=> adjustQty(1));
-  $('qtyMinus').addEventListener('click', ()=> adjustQty(-1));
-  function adjustQty(delta){
-    const item = inventory[currentBarcode];
-    if(!item) return;
-    item.qty = Math.max(0, (item.qty||0) + delta);
-    item.updatedAt = Date.now();
-    $('qtyNum').textContent = item.qty;
-    $('foundQtyText').textContent = item.qty;
-    persistInventory();
-  }
-
-  $('btnEditFound').addEventListener('click', ()=> openModal(currentBarcode));
-  $('btnDeleteFound').addEventListener('click', ()=>{
-    if(!currentBarcode) return;
-    if(confirm('¿Eliminar este artículo del inventario?')){
-      delete inventory[currentBarcode];
-      persistInventory();
-      ticket.classList.remove('show');
-      beepDelete();
-      showToast('Artículo eliminado');
-      renderInventoryList();
-    }
-  });
-
-  /* Save new item from ticket quick-add form */
-  $('btnSaveNew').addEventListener('click', ()=>{
-    const name = $('newName').value.trim();
-    if(!name){ showToast('Ingresa un nombre para el artículo.', true); $('newName').focus(); return; }
-    const now = Date.now();
-    inventory[currentBarcode] = {
-      barcode: currentBarcode,
-      name,
-      qty: parseInt($('newQty').value, 10) || 0,
-      category: $('newCat').value.trim(),
-      location: $('newLoc').value.trim(),
-      notes: $('newNotes').value.trim(),
-      createdAt: now,
-      updatedAt: now,
-      lastScanned: now,
-      scans: 1
-    };
-    persistInventory();
-    showToast('Artículo guardado en el inventario');
-    renderInventoryList();
-    showTicketForCode(currentBarcode); // refresh ticket to "found" view
-  });
-  $('btnDiscardNew').addEventListener('click', ()=>{
-    ticket.classList.remove('show');
-  });
-
-  /* ================= Inventory list ================= */
-  const invList = $('invList'), invEmpty = $('invEmpty');
-  $('searchInput').addEventListener('input', renderInventoryList);
-
-  function renderInventoryList(){
-    const items = Object.values(inventory).sort((a,b)=> (b.lastScanned||b.createdAt||0) - (a.lastScanned||a.createdAt||0));
-    const q = ($('searchInput').value || '').toLowerCase().trim();
-    const filtered = q ? items.filter(it =>
-      it.name.toLowerCase().includes(q) ||
-      it.barcode.toLowerCase().includes(q) ||
-      (it.category||'').toLowerCase().includes(q)
-    ) : items;
-
-    $('statCount').textContent = items.length;
-    $('statUnits').textContent = items.reduce((s,it)=> s + (parseInt(it.qty,10)||0), 0);
-
-    invList.innerHTML = '';
-    if(filtered.length === 0){
-      invEmpty.style.display = 'block';
-      invEmpty.querySelector('p').innerHTML = items.length === 0
-        ? 'Aún no has registrado artículos.<br>Escanea un código en la pestaña <b>Escanear</b> para empezar.'
-        : 'No hay resultados para tu búsqueda.';
+    if (error) {
+      setStatus('Error al cargar: ' + error.message, 'error');
       return;
     }
-    invEmpty.style.display = 'none';
 
-    filtered.forEach(it=>{
-      const card = document.createElement('div');
-      card.className = 'item-card';
-      card.innerHTML = `
-        <div class="mini-bars"></div>
-        <div class="info">
-          <div class="top">
-            <span class="name">${escapeHtml(it.name)}</span>
-            <span class="qty">${it.qty}</span>
+    tabla.innerHTML = '';
+    totalCount.textContent = data.length + (data.length === 1 ? ' artículo' : ' artículos');
+    emptyState.style.display = data.length === 0 ? 'block' : 'none';
+
+    data.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="mono">${item.codigo_barra}</td>
+        <td>${item.nombre}</td>
+        <td class="qty">
+          <div class="qty-controls">
+            <button data-id="${item.id}" data-delta="-1" class="btn-menos">−</button>
+            <span>${item.cantidad}</span>
+            <button data-id="${item.id}" data-delta="1" class="btn-mas">+</button>
           </div>
-          <div class="meta">
-            ${it.category ? `<span class="badge">${escapeHtml(it.category)}</span>` : ''}
-            <span>${escapeHtml(it.barcode)}</span>
-          </div>
-        </div>`;
-      renderBars(card.querySelector('.mini-bars'), 12);
-      card.addEventListener('click', ()=> openModal(it.barcode));
-      invList.appendChild(card);
+        </td>
+        <td class="mono">$${Number(item.precio).toFixed(2)}</td>
+        <td><button class="row-delete" data-id="${item.id}">Eliminar</button></td>
+      `;
+      tabla.appendChild(tr);
     });
   }
 
-  function escapeHtml(str){
-    const d = document.createElement('div');
-    d.textContent = str == null ? '' : str;
-    return d.innerHTML;
-  }
+  /* =========================================================
+     4) AGREGAR ARTÍCULO (si el código ya existe, suma cantidad)
+     ========================================================= */
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  /* ================= Edit modal ================= */
-  const modalBackdrop = $('modalBackdrop');
-  function openModal(barcode){
-    const item = inventory[barcode];
-    if(!item) return;
-    editingBarcode = barcode;
-    $('editCode').value = item.barcode;
-    $('editName').value = item.name;
-    $('editQty').value = item.qty;
-    $('editCat').value = item.category || '';
-    $('editLoc').value = item.location || '';
-    $('editNotes').value = item.notes || '';
-    modalBackdrop.classList.add('show');
-  }
-  function closeModal(){ modalBackdrop.classList.remove('show'); editingBarcode = null; }
-  $('modalClose').addEventListener('click', closeModal);
-  $('modalCancel').addEventListener('click', closeModal);
-  modalBackdrop.addEventListener('click', (e)=>{ if(e.target === modalBackdrop) closeModal(); });
+    const codigo = document.getElementById('codigo').value.trim();
+    const nombre = document.getElementById('nombre').value.trim();
+    const cantidad = parseInt(document.getElementById('cantidad').value, 10) || 0;
+    const precio = parseFloat(document.getElementById('precio').value) || 0;
 
-  $('modalSave').addEventListener('click', ()=>{
-    if(!editingBarcode) return;
-    const name = $('editName').value.trim();
-    if(!name){ showToast('El nombre no puede estar vacío.', true); return; }
-    const item = inventory[editingBarcode];
-    item.name = name;
-    item.qty = Math.max(0, parseInt($('editQty').value,10) || 0);
-    item.category = $('editCat').value.trim();
-    item.location = $('editLoc').value.trim();
-    item.notes = $('editNotes').value.trim();
-    item.updatedAt = Date.now();
-    persistInventory();
-    closeModal();
-    renderInventoryList();
-    showToast('Cambios guardados');
-    if(currentBarcode === editingBarcode) showTicketForCode(currentBarcode);
+    // Revisamos si el código ya existe
+    const { data: existente } = await sb
+      .from('inventario')
+      .select('id, cantidad')
+      .eq('codigo_barra', codigo)
+      .maybeSingle();
+
+    let error;
+    if (existente) {
+      ({ error } = await sb
+        .from('inventario')
+        .update({ cantidad: existente.cantidad + cantidad })
+        .eq('id', existente.id));
+    } else {
+      ({ error } = await sb
+        .from('inventario')
+        .insert({ codigo_barra: codigo, nombre, cantidad, precio }));
+    }
+
+    if (error) {
+      setStatus('Error al guardar: ' + error.message, 'error');
+      return;
+    }
+
+    setStatus('Artículo guardado correctamente.', 'ok');
+    form.reset();
+    document.getElementById('cantidad').value = 1;
+    cargarInventario();
   });
 
-  $('modalDelete').addEventListener('click', ()=>{
-    if(!editingBarcode) return;
-    if(confirm('¿Eliminar este artículo del inventario?')){
-      delete inventory[editingBarcode];
-      persistInventory();
-      beepDelete();
-      closeModal();
-      renderInventoryList();
-      showToast('Artículo eliminado');
-      if(currentBarcode === editingBarcode) ticket.classList.remove('show');
+  /* =========================================================
+     5) BOTONES +/- Y ELIMINAR (delegación de eventos)
+     ========================================================= */
+  tabla.addEventListener('click', async (e) => {
+    const id = e.target.dataset.id;
+    if (!id) return;
+
+    if (e.target.classList.contains('row-delete')) {
+      const { error } = await sb.from('inventario').delete().eq('id', id);
+      if (error) setStatus('Error al eliminar: ' + error.message, 'error');
+      else setStatus('Artículo eliminado.', 'ok');
+      cargarInventario();
+      return;
+    }
+
+    if (e.target.classList.contains('btn-mas') || e.target.classList.contains('btn-menos')) {
+      const delta = parseInt(e.target.dataset.delta, 10);
+      const { data: actual } = await sb.from('inventario').select('cantidad').eq('id', id).single();
+      const nuevaCantidad = Math.max(0, actual.cantidad + delta);
+      const { error } = await sb.from('inventario').update({ cantidad: nuevaCantidad }).eq('id', id);
+      if (error) setStatus('Error al actualizar: ' + error.message, 'error');
+      cargarInventario();
     }
   });
 
-  /* ================= Toast ================= */
-  let toastTimer = null;
-  function showToast(msg, isError){
-    toastMsg.textContent = msg;
-    toast.classList.toggle('error', !!isError);
-    toast.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(()=> toast.classList.remove('show'), 2400);
+  /* =========================================================
+     6) ESCÁNER DE CÓDIGO DE BARRAS (cámara)
+     ========================================================= */
+  let html5QrCode;
+  const btnStart = document.getElementById('btn-start-scan');
+  const btnStop = document.getElementById('btn-stop-scan');
+
+  btnStart.addEventListener('click', async () => {
+    html5QrCode = new Html5Qrcode("reader");
+    try {
+      await html5QrCode.start(
+        { facingMode: "environment" }, // cámara trasera en celulares
+        { fps: 10, qrbox: { width: 250, height: 120 } },
+        (textoDecodificado) => {
+          document.getElementById('codigo').value = textoDecodificado;
+          setStatus('Código detectado: ' + textoDecodificado, 'ok');
+          detenerScanner();
+          document.getElementById('nombre').focus();
+        },
+        () => { /* se ignoran los frames sin lectura */ }
+      );
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+    } catch (err) {
+      setStatus('No se pudo acceder a la cámara: ' + err, 'error');
+    }
+  });
+
+  btnStop.addEventListener('click', detenerScanner);
+
+  function detenerScanner() {
+    if (html5QrCode) {
+      html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+    }
+    btnStart.disabled = false;
+    btnStop.disabled = true;
   }
 
-  /* ================= Init ================= */
-  loadInventory();
-})();
+  /* =========================================================
+     7) CARGA INICIAL
+     ========================================================= */
+  if (!NO_CONFIGURADO) {
+    cargarInventario();
+  }
 </script>
+
 </body>
 </html>
