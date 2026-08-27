@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lector de Códigos de Barra</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f2f2f7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      color: #1c1c1e;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .video-wrapper {
+      position: relative;
+      width: 100%;
+      height: 280px;
+      background-color: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      height: 2px;
+      background-color: #ff3b30;
+      box-shadow: 0 0 10px #ff3b30;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    button, label.btn-file {
+      flex: 1;
+      padding: 14px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      color: #ffffff;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #btn-toggle {
+      background-color: #007aff;
+    }
+
+    #btn-toggle:active {
+      background-color: #0056b3;
+    }
+
+    .btn-file {
+      background-color: #8e8e93;
+      display: inline-block;
+      line-height: 1.2;
+    }
+
+    .btn-file:active {
+      background-color: #636366;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .result-box {
+      background: #f2f2f7;
+      padding: 15px;
+      border-radius: 10px;
+      word-break: break-all;
+    }
+
+    .result-box span {
+      display: block;
+      font-size: 0.85rem;
+      color: #8e8e93;
+      margin-bottom: 6px;
+    }
+
+    #result-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #34c759;
+    }
+  </style>
+  <!-- Librería ZXing -->
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Lector de Códigos de Barra</h1>
+
+    <div class="video-wrapper">
+      <!-- Imprecindible para iOS: autoplay, playsinline y muted -->
+      <video id="video" autoplay playsinline muted></video>
+      <div class="overlay"></div>
+    </div>
+
+    <div class="controls">
+      <button id="btn-toggle">Iniciar Cámara</button>
+      <label class="btn-file">
+        Subir Imagen
+        <input type="file" id="file-input" accept="image/*">
+      </label>
+    </div>
+
+    <div class="result-box">
+      <span>Resultado detectado:</span>
+      <p id="result-text">Esperando escaneo...</p>
+    </div>
+  </div>
+
+  <script>
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    const videoElement = document.getElementById('video');
+    const btnToggle = document.getElementById('btn-toggle');
+    const fileInput = document.getElementById('file-input');
+    const resultText = document.getElementById('result-text');
+
+    let isScanning = false;
+    let audioCtx = null;
+
+    // Inicialización del audio requerida por políticas de iOS Safari
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    async function startScanner() {
+      initAudio();
+      
+      try {
+        // Solicita la cámara trasera de manera flexible
+        const constraints = {
+          video: { facingMode: "environment" }
+        };
+
+        await codeReader.decodeFromConstraints(constraints, 'video', (result, err) => {
+          if (result) {
+            resultText.textContent = result.getText();
+            playBeep();
+          }
+        });
+
+        isScanning = true;
+        btnToggle.textContent = 'Detener Cámara';
+        btnToggle.style.backgroundColor = '#ff3b30';
+      } catch (err) {
+        console.error("Error de cámara:", err);
+        alert("Error al abrir cámara: " + err.message + "\nAsegúrate de estar navegando mediante HTTPS.");
+      }
+    }
+
+    function stopScanner() {
+      codeReader.reset();
+      isScanning = false;
+      btnToggle.textContent = 'Iniciar Cámara';
+      btnToggle.style.backgroundColor = '#007aff';
+    }
+
+    btnToggle.addEventListener('click', () => {
+      if (isScanning) {
+        stopScanner();
+      } else {
+        startScanner();
+      }
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+      initAudio();
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (isScanning) stopScanner();
+
+      const imgElement = document.createElement('img');
+      imgElement.src = URL.createObjectURL(file);
+      
+      imgElement.onload = async () => {
+        try {
+          const result = await codeReader.decodeFromImageElement(imgElement);
+          resultText.textContent = result.getText();
+          playBeep();
+        } catch (err) {
+          resultText.textContent = "No se detectó ningún código en la imagen.";
+        }
+      };
+    });
+
+    function playBeep() {
+      if (!audioCtx) return;
+      
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.15);
+    }
+  </script>
+
+</body>
+</html>
