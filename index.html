@@ -1,419 +1,861 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inventario & Lector de Códigos</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BARRA — Inventario por código de barras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+<style>
+  :root{
+    --ink:#EDEAE2;
+    --ink-dim:#8B8F98;
+    --bg:#15171C;
+    --panel:#1C1F26;
+    --panel-2:#232730;
+    --line:#2E323C;
+    --orange:#FF7A1A;
+    --orange-dim:#FF7A1A33;
+    --green:#3DDC84;
+    --green-dim:#3DDC8422;
+    --red:#FF4D4D;
+    --red-dim:#FF4D4D22;
+    --radius:14px;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+    --display:'Space Grotesk', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--mono);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:0 0 40px;
+  }
+  .app{
+    width:100%;
+    max-width:560px;
+    min-height:100vh;
+    background:var(--bg);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
 
-    body {
-      background-color: #f2f2f7;
-      color: #1c1c1e;
-      display: flex;
-      justify-content: center;
-      padding: 20px 10px;
-      min-height: 100vh;
-    }
+  /* ---------- Barcode stripe texture, the signature motif ---------- */
+  .stripes{
+    display:flex;
+    align-items:stretch;
+    height:100%;
+    gap:2px;
+  }
+  .stripes i{ display:block; background:currentColor; }
 
-    .container {
-      background: #ffffff;
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-      width: 100%;
-      max-width: 500px;
-    }
+  .brand-mark{
+    width:34px; height:34px; color:var(--orange); flex-shrink:0;
+  }
+  .brand-mark .stripes i:nth-child(1){width:3px;}
+  .brand-mark .stripes i:nth-child(2){width:1px;}
+  .brand-mark .stripes i:nth-child(3){width:2px;}
+  .brand-mark .stripes i:nth-child(4){width:1px;}
+  .brand-mark .stripes i:nth-child(5){width:3px;}
+  .brand-mark .stripes i:nth-child(6){width:1px;}
+  .brand-mark .stripes i:nth-child(7){width:2px;}
+  .brand-mark .stripes i:nth-child(8){width:2px;}
 
-    h1 {
-      font-size: 1.4rem;
-      text-align: center;
-      margin-bottom: 15px;
-      color: #007aff;
-    }
+  .divider-barcode{
+    height:10px;
+    display:flex;
+    gap:2px;
+    opacity:.5;
+    color:var(--line);
+    margin:0 20px;
+  }
 
-    /* Video Scanner Box */
-    .video-wrapper {
-      position: relative;
-      width: 100%;
-      height: 220px;
-      background-color: #000;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 15px;
-    }
+  /* ---------- Header ---------- */
+  header{
+    padding:22px 20px 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    border-bottom:1px solid var(--line);
+    position:sticky; top:0;
+    background:rgba(21,23,28,.92);
+    backdrop-filter:blur(8px);
+    z-index:20;
+  }
+  header h1{
+    font-family:var(--display);
+    font-size:1.15rem;
+    letter-spacing:.04em;
+    font-weight:700;
+    color:var(--ink);
+  }
+  header p{
+    font-size:.72rem;
+    color:var(--ink-dim);
+    margin-top:2px;
+    letter-spacing:.03em;
+  }
 
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+  /* ---------- Tabs ---------- */
+  nav.tabs{
+    display:flex;
+    padding:14px 20px 0;
+    gap:8px;
+  }
+  nav.tabs button{
+    flex:1;
+    background:var(--panel);
+    border:1px solid var(--line);
+    color:var(--ink-dim);
+    font-family:var(--display);
+    font-weight:600;
+    font-size:.82rem;
+    letter-spacing:.02em;
+    padding:11px 8px;
+    border-radius:10px 10px 0 0;
+    cursor:pointer;
+    transition:.15s;
+  }
+  nav.tabs button.active{
+    color:var(--bg);
+    background:var(--orange);
+    border-color:var(--orange);
+  }
 
-    .overlay {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 80%;
-      height: 2px;
-      background-color: #ff3b30;
-      box-shadow: 0 0 10px #ff3b30;
-    }
+  main{ flex:1; padding:18px 20px 10px; }
+  section.view{ display:none; animation:fade .25s ease; }
+  section.view.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
 
-    /* Controls & Buttons */
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
+  /* ---------- Scanner ---------- */
+  .scan-box{
+    position:relative;
+    width:100%;
+    aspect-ratio:4/3;
+    background:#000;
+    border-radius:var(--radius);
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .scan-box video{ width:100%; height:100%; object-fit:cover; display:block; }
+  .scan-box .laser{
+    position:absolute; left:6%; right:6%; top:50%;
+    height:2px; background:var(--red);
+    box-shadow:0 0 12px 1px var(--red);
+    animation:sweep 2.1s ease-in-out infinite;
+  }
+  @keyframes sweep{
+    0%,100%{ top:26%; opacity:.9;}
+    50%{ top:74%; opacity:.4;}
+  }
+  .scan-box .frame{
+    position:absolute; inset:14%;
+    border:2px solid #ffffff55;
+    border-radius:10px;
+    pointer-events:none;
+  }
+  .scan-box .frame::before,.scan-box .frame::after,
+  .scan-box .frame i::before,.scan-box .frame i::after{ content:''; }
+  .scan-box .hint{
+    position:absolute; bottom:10px; left:0; right:0;
+    text-align:center;
+    font-size:.68rem;
+    color:#ffffffb0;
+    letter-spacing:.05em;
+  }
+  .scan-box.idle::before{
+    content:'CÁMARA EN ESPERA';
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink-dim);
+    font-size:.75rem;
+    letter-spacing:.08em;
+  }
 
-    button, label.btn-file {
-      flex: 1;
-      padding: 12px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      color: #ffffff;
-      text-align: center;
-      -webkit-tap-highlight-color: transparent;
-      transition: opacity 0.2s;
-    }
+  .controls{
+    display:flex;
+    gap:10px;
+    margin-top:14px;
+  }
+  button.btn, label.btn{
+    flex:1;
+    padding:14px 10px;
+    font-family:var(--display);
+    font-weight:600;
+    font-size:.86rem;
+    border-radius:10px;
+    border:1px solid transparent;
+    cursor:pointer;
+    text-align:center;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    transition:.15s;
+  }
+  .btn-primary{ background:var(--orange); color:#181109; }
+  .btn-primary:active{ transform:scale(.98); }
+  .btn-primary.stop{ background:var(--red); color:#fff; }
+  .btn-secondary{ background:var(--panel-2); color:var(--ink); border-color:var(--line); }
+  .btn-secondary:active{ transform:scale(.98); }
+  input[type="file"]{ display:none; }
 
-    button:active, label.btn-file:active {
-      opacity: 0.8;
-    }
+  /* ---------- Ticket / result ---------- */
+  .ticket{
+    margin-top:18px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    display:none;
+  }
+  .ticket.show{ display:block; animation:fade .25s ease; }
+  .ticket-head{
+    padding:14px 16px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px;
+  }
+  .ticket-head .status{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:.78rem;
+    letter-spacing:.06em;
+    padding:5px 10px;
+    border-radius:20px;
+  }
+  .status.found{ background:var(--green-dim); color:var(--green); }
+  .status.new{ background:var(--orange-dim); color:var(--orange); }
+  .ticket-head .code{ font-size:.72rem; color:var(--ink-dim); }
+  .ticket-barcode{
+    height:26px; display:flex; gap:1.5px; margin:0 16px 2px; color:var(--ink);
+    opacity:.85;
+  }
+  .ticket-body{ padding:14px 16px 16px; }
+  .ticket-body .name{
+    font-family:var(--display); font-size:1.05rem; font-weight:700; margin-bottom:10px;
+  }
+  .kv{ display:flex; justify-content:space-between; font-size:.82rem; padding:6px 0; border-top:1px dashed var(--line); }
+  .kv span:first-child{ color:var(--ink-dim); }
+  .qty-row{ display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);}
+  .qty-row .qty-label{ font-size:.72rem; color:var(--ink-dim); letter-spacing:.05em; }
+  .qty-controls{ display:flex; align-items:center; gap:10px; }
+  .qty-controls button{
+    width:34px; height:34px; border-radius:8px; border:1px solid var(--line);
+    background:var(--panel-2); color:var(--ink); font-size:1.1rem; cursor:pointer; font-family:var(--mono);
+  }
+  .qty-controls button:active{ transform:scale(.92); }
+  .qty-controls .num{ font-family:var(--display); font-weight:700; font-size:1.2rem; min-width:32px; text-align:center; }
+  .ticket-actions{ display:flex; gap:8px; margin-top:14px; }
+  .ticket-actions button{ flex:1; padding:11px; border-radius:9px; font-size:.78rem; font-family:var(--display); font-weight:600; cursor:pointer; border:1px solid var(--line); background:var(--panel-2); color:var(--ink); }
+  .ticket-actions button.danger{ color:var(--red); border-color:var(--red-dim); }
+  .ticket-actions button.again{ background:var(--orange); color:#181109; border-color:var(--orange); }
 
-    .btn-primary { background-color: #007aff; }
-    .btn-danger { background-color: #ff3b30; }
-    .btn-secondary { background-color: #8e8e93; }
-    .btn-success { background-color: #34c759; }
+  /* quick add form inside ticket for new codes */
+  .qform label{ display:block; font-size:.68rem; letter-spacing:.05em; color:var(--ink-dim); margin:10px 0 5px; }
+  .qform input, .qform select, .qform textarea{
+    width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--ink);
+    padding:10px 12px; border-radius:8px; font-family:var(--mono); font-size:.88rem;
+  }
+  .qform textarea{ resize:vertical; min-height:50px; }
+  .qform .row2{ display:flex; gap:10px; }
+  .qform .row2 > div{ flex:1; }
 
-    /* Formulario del Producto */
-    .card {
-      background: #f9f9fb;
-      border: 1px solid #e5e5ea;
-      padding: 15px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-    }
+  /* ---------- Inventory list ---------- */
+  .search-wrap{ position:relative; margin-bottom:14px; }
+  .search-wrap input{
+    width:100%; background:var(--panel); border:1px solid var(--line); color:var(--ink);
+    padding:12px 14px; border-radius:10px; font-family:var(--mono); font-size:.86rem;
+  }
+  .search-wrap input::placeholder{ color:var(--ink-dim); }
 
-    .card h2 {
-      font-size: 1.1rem;
-      margin-bottom: 10px;
-    }
+  .inv-summary{ display:flex; gap:10px; margin-bottom:14px; }
+  .inv-summary .stat{
+    flex:1; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 12px;
+  }
+  .inv-summary .stat b{ display:block; font-family:var(--display); font-size:1.2rem; }
+  .inv-summary .stat span{ font-size:.66rem; color:var(--ink-dim); letter-spacing:.04em; }
 
-    .form-group {
-      margin-bottom: 10px;
-      text-align: left;
-    }
+  .item-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:12px 14px; margin-bottom:10px; cursor:pointer;
+    display:flex; align-items:center; gap:12px;
+  }
+  .item-card:active{ background:var(--panel-2); }
+  .item-card .mini-bars{ width:20px; height:30px; display:flex; gap:1.5px; color:var(--ink-dim); flex-shrink:0; }
+  .item-card .info{ flex:1; min-width:0; }
+  .item-card .info .top{ display:flex; justify-content:space-between; gap:8px; }
+  .item-card .info .name{ font-family:var(--display); font-weight:600; font-size:.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .item-card .info .qty{ font-family:var(--display); font-weight:700; color:var(--orange); font-size:.92rem; flex-shrink:0; }
+  .item-card .info .meta{ font-size:.68rem; color:var(--ink-dim); margin-top:3px; display:flex; gap:8px; }
+  .badge{ background:var(--panel-2); border:1px solid var(--line); border-radius:20px; padding:1px 8px; }
 
-    .form-group label {
-      display: block;
-      font-size: 0.8rem;
-      color: #6c6c70;
-      margin-bottom: 4px;
-    }
+  .empty{
+    text-align:center; padding:50px 20px; color:var(--ink-dim);
+  }
+  .empty .mini-bars{ width:48px; height:48px; margin:0 auto 14px; display:flex; gap:2px; color:var(--line); }
+  .empty p{ font-size:.8rem; line-height:1.5; }
 
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #c7c7cc;
-      border-radius: 8px;
-      font-size: 1rem;
-      outline: none;
-    }
+  /* ---------- Modal ---------- */
+  .modal-backdrop{
+    position:fixed; inset:0; background:#000000aa; display:none;
+    align-items:flex-end; justify-content:center; z-index:50;
+  }
+  .modal-backdrop.show{ display:flex; }
+  .modal{
+    width:100%; max-width:560px; background:var(--panel); border-radius:18px 18px 0 0;
+    padding:18px 20px 26px; max-height:88vh; overflow-y:auto;
+    border-top:1px solid var(--line);
+    animation:slideup .22s ease;
+  }
+  @keyframes slideup{ from{transform:translateY(16px); opacity:0;} to{transform:none; opacity:1;} }
+  .modal-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .modal-head h3{ font-family:var(--display); font-size:1rem; }
+  .modal-head button{ background:none; border:none; color:var(--ink-dim); font-size:1.3rem; cursor:pointer; line-height:1;}
+  .modal-actions{ display:flex; gap:10px; margin-top:16px; }
+  .modal-actions button{ flex:1; padding:13px; border-radius:9px; font-family:var(--display); font-weight:600; font-size:.85rem; cursor:pointer; border:1px solid var(--line); }
+  .modal-actions .save{ background:var(--orange); color:#181109; border-color:var(--orange); }
+  .modal-actions .cancel{ background:var(--panel-2); color:var(--ink); }
+  .modal-actions .delete{ background:var(--red-dim); color:var(--red); border-color:var(--red-dim); flex:0 0 auto; width:46px; }
 
-    .form-group input:focus {
-      border-color: #007aff;
-    }
+  /* ---------- Toast ---------- */
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(10px);
+    background:var(--panel-2); border:1px solid var(--line); color:var(--ink);
+    padding:11px 18px; border-radius:30px; font-size:.8rem; z-index:60;
+    opacity:0; pointer-events:none; transition:.25s;
+    display:flex; align-items:center; gap:8px;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast .dot{ width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; }
+  .toast.error .dot{ background:var(--red); }
 
-    /* Tabla de Inventario */
-    .table-wrapper {
-      overflow-x: auto;
-      margin-top: 10px;
-    }
+  ::selection{ background:var(--orange); color:#181109; }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-      text-align: left;
-    }
-
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #e5e5ea;
-    }
-
-    th {
-      background-color: #f2f2f7;
-      color: #6c6c70;
-    }
-
-    .action-btn {
-      padding: 4px 8px;
-      font-size: 0.75rem;
-      border-radius: 6px;
-      margin-right: 2px;
-    }
-
-    .badge-code {
-      font-family: monospace;
-      background: #e5e5ea;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-  </style>
-  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  }
+</style>
 </head>
 <body>
+<div class="app">
 
-  <div class="container">
-    <h1>📦 Lector & Inventario</h1>
-
-    <!-- Visor de Cámara -->
-    <div class="video-wrapper">
-      <video id="video" autoplay playsinline muted></video>
-      <div class="overlay"></div>
+  <header>
+    <div class="brand-mark">
+      <div class="stripes"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     </div>
-
-    <!-- Botones Principales -->
-    <div class="btn-group">
-      <button id="btn-toggle" class="btn-primary">Iniciar Cámara</button>
-      <button id="btn-export" class="btn-secondary">Exportar Data</button>
+    <div>
+      <h1>BARRA</h1>
+      <p>Escanea un código · consulta o registra el artículo</p>
     </div>
+  </header>
 
-    <!-- Tarjeta de Producto (Escaneado o Nuevo) -->
-    <div class="card" id="product-card">
-      <h2 id="card-title">Resultado del Escaneo</h2>
-      <div class="form-group">
-        <label for="code-input">Código de Barras</label>
-        <input type="text" id="code-input" placeholder="Esperando código..." readonly>
+  <nav class="tabs">
+    <button class="active" data-tab="scan">Escanear</button>
+    <button data-tab="inv">Inventario</button>
+  </nav>
+
+  <main>
+    <!-- ================= SCAN VIEW ================= -->
+    <section class="view active" id="view-scan">
+
+      <div class="scan-box idle" id="scanBox">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="laser" id="laser" style="display:none"></div>
+        <div class="frame" id="frame" style="display:none"></div>
       </div>
-      <div class="form-group">
-        <label for="name-input">Nombre del Producto</label>
-        <input type="text" id="name-input" placeholder="Ej. Galletas de Chocolate">
+
+      <div class="controls">
+        <button class="btn btn-primary" id="btnToggle">Iniciar cámara</button>
+        <label class="btn btn-secondary" for="fileInput">Subir imagen</label>
+        <input type="file" id="fileInput" accept="image/*">
       </div>
-      <div style="display: flex; gap: 10px;">
-        <div class="form-group" style="flex: 1;">
-          <label for="price-input">Precio ($)</label>
-          <input type="number" id="price-input" step="0.01" placeholder="0.00">
+
+      <!-- Result ticket -->
+      <div class="ticket" id="ticket">
+        <div class="ticket-head">
+          <span class="status" id="ticketStatus">—</span>
+          <span class="code" id="ticketCode">—</span>
         </div>
-        <div class="form-group" style="flex: 1;">
-          <label for="stock-input">Stock</label>
-          <input type="number" id="stock-input" placeholder="0">
+        <div class="ticket-barcode" id="ticketBars"></div>
+
+        <div class="ticket-body" id="ticketBodyFound" style="display:none">
+          <div class="name" id="foundName">—</div>
+          <div class="kv"><span>Cantidad</span><span id="foundQtyText">0</span></div>
+          <div class="kv"><span>Categoría</span><span id="foundCat">—</span></div>
+          <div class="kv"><span>Ubicación</span><span id="foundLoc">—</span></div>
+          <div class="kv"><span>Notas</span><span id="foundNotes">—</span></div>
+          <div class="kv"><span>Últ. escaneo</span><span id="foundLast">—</span></div>
+
+          <div class="qty-row">
+            <span class="qty-label">AJUSTAR STOCK</span>
+            <div class="qty-controls">
+              <button id="qtyMinus">−</button>
+              <span class="num" id="qtyNum">0</span>
+              <button id="qtyPlus">+</button>
+            </div>
+          </div>
+
+          <div class="ticket-actions">
+            <button class="again" id="btnScanAgain">Escanear otro</button>
+            <button id="btnEditFound">Editar</button>
+            <button class="danger" id="btnDeleteFound">Eliminar</button>
+          </div>
+        </div>
+
+        <div class="ticket-body qform" id="ticketBodyNew" style="display:none">
+          <div class="name" style="margin-bottom:0;">Código nuevo — no está en tu inventario</div>
+          <label>Nombre del artículo *</label>
+          <input type="text" id="newName" placeholder="Ej. Cable USB-C 1m">
+          <div class="row2">
+            <div>
+              <label>Cantidad inicial</label>
+              <input type="number" id="newQty" value="1" min="0">
+            </div>
+            <div>
+              <label>Categoría</label>
+              <input type="text" id="newCat" list="catList" placeholder="Ej. Electrónica">
+              <datalist id="catList">
+                <option value="Electrónica"></option>
+                <option value="Alimentos"></option>
+                <option value="Ropa"></option>
+                <option value="Herramientas"></option>
+                <option value="Oficina"></option>
+                <option value="Otros"></option>
+              </datalist>
+            </div>
+          </div>
+          <label>Ubicación</label>
+          <input type="text" id="newLoc" placeholder="Ej. Estante 3 / Bodega A">
+          <label>Notas</label>
+          <textarea id="newNotes" placeholder="Detalles adicionales..."></textarea>
+
+          <div class="ticket-actions">
+            <button class="again" id="btnSaveNew">Guardar en inventario</button>
+            <button id="btnDiscardNew">Descartar</button>
+          </div>
         </div>
       </div>
-      <button id="btn-save" class="btn-success" style="width: 100%; margin-top: 5px;">Guardar en Inventario</button>
-    </div>
 
-    <!-- Tabla de Productos Registrados -->
-    <div class="card">
-      <h2>Productos en Inventario (<span id="total-count">0</span>)</h2>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Producto</th>
-              <th>Precio</th>
-              <th>Stock</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody id="inventory-list">
-            <!-- Se llena dinámicamente -->
-          </tbody>
-        </table>
+    </section>
+
+    <!-- ================= INVENTORY VIEW ================= -->
+    <section class="view" id="view-inv">
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="Buscar por nombre, código o categoría…">
       </div>
+
+      <div class="inv-summary">
+        <div class="stat"><b id="statCount">0</b><span>ARTÍCULOS</span></div>
+        <div class="stat"><b id="statUnits">0</b><span>UNIDADES TOTALES</span></div>
+      </div>
+
+      <div id="invList"></div>
+
+      <div class="empty" id="invEmpty" style="display:none">
+        <div class="mini-bars"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <p>Aún no has registrado artículos.<br>Escanea un código en la pestaña <b>Escanear</b> para empezar.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Edit modal -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Editar artículo</h3>
+      <button id="modalClose">✕</button>
+    </div>
+    <div class="qform" style="padding:0">
+      <label>Código</label>
+      <input type="text" id="editCode" disabled>
+      <label>Nombre *</label>
+      <input type="text" id="editName">
+      <div class="row2">
+        <div>
+          <label>Cantidad</label>
+          <input type="number" id="editQty" min="0">
+        </div>
+        <div>
+          <label>Categoría</label>
+          <input type="text" id="editCat" list="catList">
+        </div>
+      </div>
+      <label>Ubicación</label>
+      <input type="text" id="editLoc">
+      <label>Notas</label>
+      <textarea id="editNotes"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="delete" id="modalDelete">🗑</button>
+      <button class="cancel" id="modalCancel">Cancelar</button>
+      <button class="save" id="modalSave">Guardar</button>
     </div>
   </div>
+</div>
 
-  <script>
-    const codeReader = new ZXing.BrowserMultiFormatReader();
-    const videoElement = document.getElementById('video');
-    const btnToggle = document.getElementById('btn-toggle');
-    const btnSave = document.getElementById('btn-save');
-    const btnExport = document.getElementById('btn-export');
-    
-    // Inputs del Formulario
-    const codeInput = document.getElementById('code-input');
-    const nameInput = document.getElementById('name-input');
-    const priceInput = document.getElementById('price-input');
-    const stockInput = document.getElementById('stock-input');
-    const inventoryList = document.getElementById('inventory-list');
-    const totalCount = document.getElementById('total-count');
+<div class="toast" id="toast"><span class="dot"></span><span id="toastMsg">Guardado</span></div>
 
-    let isScanning = false;
-    let audioCtx = null;
-    let inventory = JSON.parse(localStorage.getItem('my_inventory')) || {};
+<script>
+(function(){
+  "use strict";
 
-    // Cargar inventario guardado al iniciar
-    renderInventory();
+  /* ================= STATE ================= */
+  let inventory = {};          // { barcode: {barcode,name,qty,category,location,notes,createdAt,updatedAt,scans} }
+  let currentBarcode = null;   // barcode currently shown in ticket
+  let editingBarcode = null;   // barcode open in modal
+  let isScanning = false;
+  let audioCtx = null;
+  const codeReader = new ZXing.BrowserMultiFormatReader();
 
-    // Inicializar Audio para iOS
-    function initAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+  const STORAGE_KEY = 'inventory-data';
+
+  /* ================= DOM refs ================= */
+  const $ = (id) => document.getElementById(id);
+  const video = $('video'), scanBox = $('scanBox'), laser = $('laser'), frame = $('frame');
+  const btnToggle = $('btnToggle'), fileInput = $('fileInput');
+  const ticket = $('ticket'), ticketStatus = $('ticketStatus'), ticketCode = $('ticketCode'), ticketBars = $('ticketBars');
+  const bodyFound = $('ticketBodyFound'), bodyNew = $('ticketBodyNew');
+  const toast = $('toast'), toastMsg = $('toastMsg');
+
+  /* ================= Storage helpers ================= */
+  async function loadInventory(){
+    try{
+      const res = await window.storage.get(STORAGE_KEY, false);
+      inventory = res && res.value ? JSON.parse(res.value) : {};
+    }catch(e){
+      inventory = {};
     }
+    renderInventoryList();
+  }
 
-    // Escáner de Cámara
-    async function startScanner() {
-      initAudio();
-      try {
-        const constraints = { video: { facingMode: "environment" } };
-        await codeReader.decodeFromConstraints(constraints, 'video', (result, err) => {
-          if (result) {
-            const scannedCode = result.getText();
-            codeInput.value = scannedCode;
-            playBeep();
-            processScannedCode(scannedCode);
-          }
-        });
-
-        isScanning = true;
-        btnToggle.textContent = 'Detener Cámara';
-        btnToggle.className = 'btn-danger';
-      } catch (err) {
-        alert("Error de cámara: " + err.message + "\nAsegúrate de usar conexión HTTPS.");
-      }
+  async function persistInventory(){
+    try{
+      const res = await window.storage.set(STORAGE_KEY, JSON.stringify(inventory), false);
+      if(!res){ showToast('No se pudo guardar. Intenta de nuevo.', true); }
+    }catch(e){
+      showToast('Error al guardar los datos.', true);
     }
+  }
 
-    function stopScanner() {
-      codeReader.reset();
-      isScanning = false;
-      btnToggle.textContent = 'Iniciar Cámara';
-      btnToggle.className = 'btn-primary';
+  /* ================= Audio feedback ================= */
+  function initAudio(){
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  }
+  function tone(freq, start, dur, vol){
+    if(!audioCtx) return;
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime + start);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + start + dur);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + start);
+    osc.stop(audioCtx.currentTime + start + dur);
+  }
+  function beepFound(){ tone(880, 0, .12, .12); }
+  function beepNew(){ tone(660, 0, .09, .12); tone(880, .12, .12, .12); }
+  function beepDelete(){ tone(440, 0, .1, .1); tone(300, .1, .12, .1); }
+
+  /* ================= Barcode stripe visuals ================= */
+  function renderBars(container, count, colorful){
+    container.innerHTML = '';
+    for(let i=0;i<count;i++){
+      const bar = document.createElement('i');
+      const w = [1,1,2,1,3,1,2,1][i % 8];
+      bar.style.width = w + 'px';
+      bar.style.background = 'currentColor';
+      bar.style.opacity = (0.4 + Math.random()*0.6).toFixed(2);
+      container.appendChild(bar);
     }
+    container.style.display = 'flex';
+  }
 
-    btnToggle.addEventListener('click', () => {
-      isScanning ? stopScanner() : startScanner();
+  /* ================= Tabs ================= */
+  document.querySelectorAll('nav.tabs button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('section.view').forEach(v=>v.classList.remove('active'));
+      btn.classList.add('active');
+      $('view-' + btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab === 'inv') renderInventoryList();
     });
+  });
 
-    // Buscar si el producto ya existe en el inventario local
-    function processScannedCode(code) {
-      if (inventory[code]) {
-        // Si existe, cargar datos
-        nameInput.value = inventory[code].name;
-        priceInput.value = inventory[code].price;
-        stockInput.value = inventory[code].stock;
-        document.getElementById('card-title').textContent = '✅ Producto Encontrado';
-      } else {
-        // Si no existe, preparar para crear
-        nameInput.value = '';
-        priceInput.value = '';
-        stockInput.value = '';
-        document.getElementById('card-title').textContent = '🆕 Nuevo Producto';
-      }
-    }
-
-    // Guardar / Actualizar en localStorage
-    btnSave.addEventListener('click', () => {
-      const code = codeInput.value.trim();
-      const name = nameInput.value.trim();
-      const price = parseFloat(priceInput.value) || 0;
-      const stock = parseInt(stockInput.value) || 0;
-
-      if (!code) {
-        alert("Primero debes escanear un código de barras.");
-        return;
-      }
-      if (!name) {
-        alert("Por favor ingresa el nombre del producto.");
-        return;
-      }
-
-      // Guardar en objeto inventario
-      inventory[code] = { name, price, stock };
-      
-      // Persistir en LocalStorage
-      localStorage.setItem('my_inventory', JSON.stringify(inventory));
-      
-      renderInventory();
-      alert("¡Producto guardado correctamente!");
-
-      // Resetear campos
-      codeInput.value = '';
-      nameInput.value = '';
-      priceInput.value = '';
-      stockInput.value = '';
-      document.getElementById('card-title').textContent = 'Resultado del Escaneo';
-    });
-
-    // Renderizar lista completa
-    function renderInventory() {
-      inventoryList.innerHTML = '';
-      const keys = Object.keys(inventory);
-      totalCount.textContent = keys.length;
-
-      keys.forEach(code => {
-        const item = inventory[code];
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td><span class="badge-code">${code}</span></td>
-          <td>${item.name}</td>
-          <td>$${item.price.toFixed(2)}</td>
-          <td><strong>${item.stock}</strong></td>
-          <td>
-            <button class="action-btn btn-primary" onclick="editProduct('${code}')">✏️</button>
-            <button class="action-btn btn-danger" onclick="deleteProduct('${code}')">🗑️</button>
-          </td>
-        `;
-        inventoryList.appendChild(row);
+  /* ================= Scanner ================= */
+  async function startScanner(){
+    initAudio();
+    try{
+      const constraints = { video: { facingMode: "environment" } };
+      await codeReader.decodeFromConstraints(constraints, 'video', (result, err)=>{
+        if(result) handleScanResult(result.getText());
       });
+      isScanning = true;
+      scanBox.classList.remove('idle');
+      laser.style.display = 'block';
+      frame.style.display = 'block';
+      btnToggle.textContent = 'Detener cámara';
+      btnToggle.classList.add('stop');
+    }catch(err){
+      console.error(err);
+      showToast('No se pudo abrir la cámara. Verifica permisos y HTTPS.', true);
     }
+  }
+  function stopScanner(){
+    codeReader.reset();
+    isScanning = false;
+    scanBox.classList.add('idle');
+    laser.style.display = 'none';
+    frame.style.display = 'none';
+    btnToggle.textContent = 'Iniciar cámara';
+    btnToggle.classList.remove('stop');
+  }
+  btnToggle.addEventListener('click', ()=> isScanning ? stopScanner() : startScanner());
 
-    // Cargar producto desde la tabla para editar
-    window.editProduct = function(code) {
-      codeInput.value = code;
-      processScannedCode(code);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+  fileInput.addEventListener('change', (e)=>{
+    initAudio();
+    const file = e.target.files[0];
+    if(!file) return;
+    if(isScanning) stopScanner();
 
-    // Eliminar producto
-    window.deleteProduct = function(code) {
-      if (confirm(`¿Seguro que deseas eliminar "${inventory[code].name}"?`)) {
-        delete inventory[code];
-        localStorage.setItem('my_inventory', JSON.stringify(inventory));
-        renderInventory();
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    img.onload = async ()=>{
+      try{
+        const result = await codeReader.decodeFromImageElement(img);
+        handleScanResult(result.getText());
+      }catch(err){
+        showToast('No se detectó ningún código en la imagen.', true);
       }
+      fileInput.value = '';
     };
+  });
 
-    // Exportar inventario en formato JSON
-    btnExport.addEventListener('click', () => {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(inventory, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `inventario_${new Date().toISOString().slice(0,10)}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    });
+  /* Pause continuous scanning once we get a hit, until user asks to scan again */
+  function handleScanResult(code){
+    if(isScanning){ codeReader.reset(); isScanning = false; scanBox.classList.add('idle'); laser.style.display='none'; frame.style.display='none'; btnToggle.textContent='Iniciar cámara'; btnToggle.classList.remove('stop'); }
+    showTicketForCode(code);
+  }
 
-    // Tono Beep
-    function playBeep() {
-      if (!audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(900, audioCtx.currentTime);
-      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.12);
+  /* ================= Ticket rendering ================= */
+  function showTicketForCode(code){
+    currentBarcode = code;
+    ticket.classList.add('show');
+    ticketCode.textContent = code;
+    renderBars(ticketBars, 46);
+
+    const item = inventory[code];
+    if(item){
+      ticketStatus.textContent = 'EN INVENTARIO';
+      ticketStatus.className = 'status found';
+      bodyFound.style.display = 'block';
+      bodyNew.style.display = 'none';
+
+      item.scans = (item.scans || 0) + 1;
+      item.lastScanned = Date.now();
+      persistInventory();
+
+      $('foundName').textContent = item.name;
+      $('foundQtyText').textContent = item.qty;
+      $('foundCat').textContent = item.category || '—';
+      $('foundLoc').textContent = item.location || '—';
+      $('foundNotes').textContent = item.notes || '—';
+      $('foundLast').textContent = new Date(item.lastScanned).toLocaleString('es-ES', {dateStyle:'medium', timeStyle:'short'});
+      $('qtyNum').textContent = item.qty;
+
+      beepFound();
+    } else {
+      ticketStatus.textContent = 'CÓDIGO NUEVO';
+      ticketStatus.className = 'status new';
+      bodyFound.style.display = 'none';
+      bodyNew.style.display = 'block';
+      $('newName').value = '';
+      $('newQty').value = 1;
+      $('newCat').value = '';
+      $('newLoc').value = '';
+      $('newNotes').value = '';
+      beepNew();
     }
-  </script>
+  }
+
+  $('btnScanAgain').addEventListener('click', ()=>{
+    ticket.classList.remove('show');
+    startScanner();
+  });
+
+  /* Quantity adjust from ticket */
+  $('qtyPlus').addEventListener('click', ()=> adjustQty(1));
+  $('qtyMinus').addEventListener('click', ()=> adjustQty(-1));
+  function adjustQty(delta){
+    const item = inventory[currentBarcode];
+    if(!item) return;
+    item.qty = Math.max(0, (item.qty||0) + delta);
+    item.updatedAt = Date.now();
+    $('qtyNum').textContent = item.qty;
+    $('foundQtyText').textContent = item.qty;
+    persistInventory();
+  }
+
+  $('btnEditFound').addEventListener('click', ()=> openModal(currentBarcode));
+  $('btnDeleteFound').addEventListener('click', ()=>{
+    if(!currentBarcode) return;
+    if(confirm('¿Eliminar este artículo del inventario?')){
+      delete inventory[currentBarcode];
+      persistInventory();
+      ticket.classList.remove('show');
+      beepDelete();
+      showToast('Artículo eliminado');
+      renderInventoryList();
+    }
+  });
+
+  /* Save new item from ticket quick-add form */
+  $('btnSaveNew').addEventListener('click', ()=>{
+    const name = $('newName').value.trim();
+    if(!name){ showToast('Ingresa un nombre para el artículo.', true); $('newName').focus(); return; }
+    const now = Date.now();
+    inventory[currentBarcode] = {
+      barcode: currentBarcode,
+      name,
+      qty: parseInt($('newQty').value, 10) || 0,
+      category: $('newCat').value.trim(),
+      location: $('newLoc').value.trim(),
+      notes: $('newNotes').value.trim(),
+      createdAt: now,
+      updatedAt: now,
+      lastScanned: now,
+      scans: 1
+    };
+    persistInventory();
+    showToast('Artículo guardado en el inventario');
+    renderInventoryList();
+    showTicketForCode(currentBarcode); // refresh ticket to "found" view
+  });
+  $('btnDiscardNew').addEventListener('click', ()=>{
+    ticket.classList.remove('show');
+  });
+
+  /* ================= Inventory list ================= */
+  const invList = $('invList'), invEmpty = $('invEmpty');
+  $('searchInput').addEventListener('input', renderInventoryList);
+
+  function renderInventoryList(){
+    const items = Object.values(inventory).sort((a,b)=> (b.lastScanned||b.createdAt||0) - (a.lastScanned||a.createdAt||0));
+    const q = ($('searchInput').value || '').toLowerCase().trim();
+    const filtered = q ? items.filter(it =>
+      it.name.toLowerCase().includes(q) ||
+      it.barcode.toLowerCase().includes(q) ||
+      (it.category||'').toLowerCase().includes(q)
+    ) : items;
+
+    $('statCount').textContent = items.length;
+    $('statUnits').textContent = items.reduce((s,it)=> s + (parseInt(it.qty,10)||0), 0);
+
+    invList.innerHTML = '';
+    if(filtered.length === 0){
+      invEmpty.style.display = 'block';
+      invEmpty.querySelector('p').innerHTML = items.length === 0
+        ? 'Aún no has registrado artículos.<br>Escanea un código en la pestaña <b>Escanear</b> para empezar.'
+        : 'No hay resultados para tu búsqueda.';
+      return;
+    }
+    invEmpty.style.display = 'none';
+
+    filtered.forEach(it=>{
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      card.innerHTML = `
+        <div class="mini-bars"></div>
+        <div class="info">
+          <div class="top">
+            <span class="name">${escapeHtml(it.name)}</span>
+            <span class="qty">${it.qty}</span>
+          </div>
+          <div class="meta">
+            ${it.category ? `<span class="badge">${escapeHtml(it.category)}</span>` : ''}
+            <span>${escapeHtml(it.barcode)}</span>
+          </div>
+        </div>`;
+      renderBars(card.querySelector('.mini-bars'), 12);
+      card.addEventListener('click', ()=> openModal(it.barcode));
+      invList.appendChild(card);
+    });
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : str;
+    return d.innerHTML;
+  }
+
+  /* ================= Edit modal ================= */
+  const modalBackdrop = $('modalBackdrop');
+  function openModal(barcode){
+    const item = inventory[barcode];
+    if(!item) return;
+    editingBarcode = barcode;
+    $('editCode').value = item.barcode;
+    $('editName').value = item.name;
+    $('editQty').value = item.qty;
+    $('editCat').value = item.category || '';
+    $('editLoc').value = item.location || '';
+    $('editNotes').value = item.notes || '';
+    modalBackdrop.classList.add('show');
+  }
+  function closeModal(){ modalBackdrop.classList.remove('show'); editingBarcode = null; }
+  $('modalClose').addEventListener('click', closeModal);
+  $('modalCancel').addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', (e)=>{ if(e.target === modalBackdrop) closeModal(); });
+
+  $('modalSave').addEventListener('click', ()=>{
+    if(!editingBarcode) return;
+    const name = $('editName').value.trim();
+    if(!name){ showToast('El nombre no puede estar vacío.', true); return; }
+    const item = inventory[editingBarcode];
+    item.name = name;
+    item.qty = Math.max(0, parseInt($('editQty').value,10) || 0);
+    item.category = $('editCat').value.trim();
+    item.location = $('editLoc').value.trim();
+    item.notes = $('editNotes').value.trim();
+    item.updatedAt = Date.now();
+    persistInventory();
+    closeModal();
+    renderInventoryList();
+    showToast('Cambios guardados');
+    if(currentBarcode === editingBarcode) showTicketForCode(currentBarcode);
+  });
+
+  $('modalDelete').addEventListener('click', ()=>{
+    if(!editingBarcode) return;
+    if(confirm('¿Eliminar este artículo del inventario?')){
+      delete inventory[editingBarcode];
+      persistInventory();
+      beepDelete();
+      closeModal();
+      renderInventoryList();
+      showToast('Artículo eliminado');
+      if(currentBarcode === editingBarcode) ticket.classList.remove('show');
+    }
+  });
+
+  /* ================= Toast ================= */
+  let toastTimer = null;
+  function showToast(msg, isError){
+    toastMsg.textContent = msg;
+    toast.classList.toggle('error', !!isError);
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> toast.classList.remove('show'), 2400);
+  }
+
+  /* ================= Init ================= */
+  loadInventory();
+})();
+</script>
 </body>
 </html>
