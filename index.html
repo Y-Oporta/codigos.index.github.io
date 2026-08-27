@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Inventario · Manifiesto de bodega</title>
 
 <!-- Fuentes -->
@@ -11,8 +11,8 @@
 
 <!-- Cliente de Supabase (habla con la base de datos vía REST) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- Librería para leer códigos de barras con la cámara -->
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<!-- Librería para leer códigos de barras con la cámara (ZXing: más confiable que html5-qrcode para códigos 1D como EAN/UPC/Code128) -->
+<script src="https://unpkg.com/@zxing/library@latest"></script>
 
 <style>
   :root{
@@ -114,14 +114,54 @@
   #config-warning code{ background:#fff; padding:1px 5px; border-radius:3px; }
 
   /* ---------- Escáner ---------- */
-  #reader{
+  .scan-box{
+    position: relative;
     width: 100%;
     max-width: 420px;
+    aspect-ratio: 4 / 3;
     margin: 0 auto 14px;
     border-radius: 6px;
     overflow: hidden;
     border: 1px solid var(--line);
+    background: #0B0F16;
   }
+  .scan-box video{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .scan-box .frame{
+    position: absolute; inset: 16% 8%;
+    border: 2px solid rgba(255,255,255,.55);
+    border-radius: 6px;
+    pointer-events: none;
+    display: none;
+  }
+  .scan-box .laser{
+    position: absolute; left: 8%; right: 8%; top: 50%;
+    height: 2px; background: var(--orange);
+    box-shadow: 0 0 10px 1px var(--orange);
+    animation: sweep 2s ease-in-out infinite;
+    display: none;
+  }
+  @keyframes sweep{
+    0%,100%{ top: 20%; }
+    50%{ top: 80%; }
+  }
+  .scan-box.activo .frame, .scan-box.activo .laser{ display: block; }
+  .scan-box .idle-msg{
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #8B95A6;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: .5px;
+    text-align: center;
+    padding: 0 20px;
+  }
+  .scan-box.activo .idle-msg{ display: none; }
+
   .scanner-actions{
     display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom: 18px;
   }
@@ -149,7 +189,7 @@
     border: 1px solid var(--line);
     border-radius: 5px;
     font-family: 'Space Mono', monospace;
-    font-size: 14px;
+    font-size: 16px; /* 16px o más evita que Safari/Chrome en iOS hagan zoom al enfocar */
     background: #FBFBFC;
   }
   input:focus{ outline: 2px solid var(--orange); outline-offset: 1px; }
@@ -238,6 +278,12 @@
 
   @media (max-width: 520px){
     .form-grid{ grid-template-columns: 1fr; }
+    main{ padding: 18px 14px; gap: 18px; }
+    .card{ padding: 16px; }
+    header{ padding: 22px 16px 18px; }
+    .scanner-actions{ flex-direction: column; }
+    .scanner-actions button{ width: 100%; }
+    table{ display:block; overflow-x:auto; white-space:nowrap; }
   }
 </style>
 </head>
@@ -262,7 +308,12 @@
   <!-- ESCÁNER -->
   <section class="card">
     <h2>Escanear artículo</h2>
-    <div id="reader"></div>
+    <div class="scan-box" id="scan-box">
+      <video id="video" muted playsinline></video>
+      <div class="frame" id="frame"></div>
+      <div class="laser" id="laser"></div>
+      <div class="idle-msg">Pulsa "Iniciar cámara" y apunta al código de barras</div>
+    </div>
     <div class="scanner-actions">
       <button class="btn-scan" id="btn-start-scan">Iniciar cámara</button>
       <button class="btn-stop" id="btn-stop-scan" disabled>Detener cámara</button>
@@ -452,39 +503,52 @@
   });
 
   /* =========================================================
-     6) ESCÁNER DE CÓDIGO DE BARRAS (cámara)
+     6) ESCÁNER DE CÓDIGO DE BARRAS (cámara) — con ZXing
      ========================================================= */
-  let html5QrCode;
+  const codeReader = new ZXing.BrowserMultiFormatReader();
+  const scanBox = document.getElementById('scan-box');
   const btnStart = document.getElementById('btn-start-scan');
   const btnStop = document.getElementById('btn-stop-scan');
+  let escaneando = false;
 
-  btnStart.addEventListener('click', async () => {
-    html5QrCode = new Html5Qrcode("reader");
+  btnStart.addEventListener('click', iniciarScanner);
+  btnStop.addEventListener('click', detenerScanner);
+
+  async function iniciarScanner() {
     try {
-      await html5QrCode.start(
-        { facingMode: "environment" }, // cámara trasera en celulares
-        { fps: 10, qrbox: { width: 250, height: 120 } },
-        (textoDecodificado) => {
-          document.getElementById('codigo').value = textoDecodificado;
-          setStatus('Código detectado: ' + textoDecodificado, 'ok');
-          detenerScanner();
-          document.getElementById('nombre').focus();
-        },
-        () => { /* se ignoran los frames sin lectura */ }
+      // decodeFromConstraints pide la cámara trasera y dibuja el video
+      // directo en el elemento con id="video"
+      await codeReader.decodeFromConstraints(
+        { video: { facingMode: "environment" } },
+        'video',
+        (resultado, err) => {
+          if (resultado) {
+            const texto = resultado.getText();
+            document.getElementById('codigo').value = texto;
+            setStatus('Código detectado: ' + texto, 'ok');
+            detenerScanner();
+            document.getElementById('nombre').focus();
+          }
+          // si "err" existe simplemente significa que ese frame no traía
+          // un código legible todavía; no es un error real, se ignora.
+        }
       );
+      escaneando = true;
+      scanBox.classList.add('activo');
       btnStart.disabled = true;
       btnStop.disabled = false;
     } catch (err) {
-      setStatus('No se pudo acceder a la cámara: ' + err, 'error');
+      setStatus('No se pudo acceder a la cámara. Revisa permisos y que la página esté en HTTPS o localhost.', 'error');
+      console.error(err);
     }
-  });
-
-  btnStop.addEventListener('click', detenerScanner);
+  }
 
   function detenerScanner() {
-    if (html5QrCode) {
-      html5QrCode.stop().then(() => html5QrCode.clear()).catch(() => {});
+    if (escaneando) {
+      codeReader.reset();
+      escaneando = false;
     }
+    scanBox.classList.remove('activo');
     btnStart.disabled = false;
     btnStop.disabled = true;
   }
