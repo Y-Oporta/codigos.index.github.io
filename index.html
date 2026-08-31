@@ -9,21 +9,21 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Inventario">
-<meta name="theme-color" content="#1B2A45">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231B2A45'/><g fill='white'><rect x='20' y='30' width='4' height='40'/><rect x='28' y='30' width='2' height='40'/><rect x='34' y='30' width='6' height='40'/><rect x='44' y='30' width='2' height='40'/><rect x='50' y='30' width='4' height='40'/><rect x='58' y='30' width='2' height='40'/><rect x='64' y='30' width='6' height='40'/><rect x='74' y='30' width='2' height='40'/></g></svg>">
+<meta name="theme-color" content="#16233D">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2316233D'/><g fill='white'><rect x='20' y='30' width='4' height='40'/><rect x='28' y='30' width='2' height='40'/><rect x='34' y='30' width='6' height='40'/><rect x='44' y='30' width='2' height='40'/><rect x='50' y='30' width='4' height='40'/><rect x='58' y='30' width='2' height='40'/><rect x='64' y='30' width='6' height='40'/><rect x='74' y='30' width='2' height='40'/></g></svg>">
 
 <script>
   // Genera el manifest.json "al vuelo" para que el navegador ofrezca
   // instalar la app en la pantalla de inicio, sin necesitar un archivo aparte.
   (function () {
-    const icono = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231B2A45'/><g fill='white'><rect x='20' y='30' width='4' height='40'/><rect x='28' y='30' width='2' height='40'/><rect x='34' y='30' width='6' height='40'/><rect x='44' y='30' width='2' height='40'/><rect x='50' y='30' width='4' height='40'/><rect x='58' y='30' width='2' height='40'/><rect x='64' y='30' width='6' height='40'/><rect x='74' y='30' width='2' height='40'/></g></svg>";
+    const icono = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2316233D'/><g fill='white'><rect x='20' y='30' width='4' height='40'/><rect x='28' y='30' width='2' height='40'/><rect x='34' y='30' width='6' height='40'/><rect x='44' y='30' width='2' height='40'/><rect x='50' y='30' width='4' height='40'/><rect x='58' y='30' width='2' height='40'/><rect x='64' y='30' width='6' height='40'/><rect x='74' y='30' width='2' height='40'/></g></svg>";
     const manifest = {
       name: "Inventario · Manifiesto de bodega",
       short_name: "Inventario",
       start_url: window.location.href,
       display: "standalone",
-      background_color: "#EDEFF1",
-      theme_color: "#1B2A45",
+      background_color: "#EEF1F4",
+      theme_color: "#16233D",
       icons: [{ src: icono, sizes: "512x512", type: "image/svg+xml" }]
     };
     const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
@@ -36,33 +36,45 @@
 
 <!-- Fuentes -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
 <!-- Cliente de Supabase (habla con la base de datos vía REST) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- Librería para leer códigos de barras con la cámara (ZXing: más confiable que html5-qrcode para códigos 1D como EAN/UPC/Code128) -->
+<!-- Librería para leer códigos de barras con la cámara -->
 <script src="https://unpkg.com/@zxing/library@latest"></script>
 
 <style>
   :root{
-    --bg: #EDEFF1;
+    --bg: #EEF1F4;
     --surface: #FFFFFF;
-    --ink: #1F2430;
-    --ink-soft: #5B6472;
-    --navy: #1B2A45;
-    --orange: #FF6B35;
+    --surface-alt: #F5F7F9;
+    --ink: #1B2130;
+    --ink-soft: #667085;
+    --ink-faint: #98A2B3;
+    --navy: #16233D;
+    --navy-soft: #223350;
+    --orange: #FF6A35;
+    --orange-soft: #FFF1EA;
     --green: #2E7D32;
-    --red: #D64550;
-    --line: #C9CDD3;
+    --green-soft: #EAF7EC;
+    --red: #E14F5A;
+    --red-soft: #FDEAEC;
+    --line: #E3E6EA;
+    --shadow-sm: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.08);
+    --shadow-md: 0 8px 20px rgba(16,24,40,.10), 0 2px 6px rgba(16,24,40,.06);
+    --radius: 14px;
+    --radius-sm: 9px;
   }
 
   *{ box-sizing: border-box; }
+  html{ -webkit-text-size-adjust: 100%; }
 
   body{
     margin:0;
     background: var(--bg);
     color: var(--ink);
     font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
     padding-bottom: 60px;
   }
 
@@ -79,27 +91,32 @@
     position:absolute; inset:0;
     background: repeating-linear-gradient(
       90deg,
-      rgba(255,255,255,.10) 0 2px,
+      rgba(255,255,255,.08) 0 2px,
       transparent 2px 5px,
-      rgba(255,255,255,.10) 5px 6px,
+      rgba(255,255,255,.08) 5px 6px,
       transparent 6px 11px,
-      rgba(255,255,255,.10) 11px 14px,
+      rgba(255,255,255,.08) 11px 14px,
       transparent 14px 20px
     );
-    opacity:.5;
+    opacity:.4;
   }
-  header .content{ position:relative; max-width: 1100px; margin:0 auto; display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  header .content{
+    position:relative; max-width: 1100px; margin:0 auto;
+    display:flex; justify-content:space-between; align-items:flex-start; gap:12px;
+    flex-wrap: wrap;
+  }
   header h1{
     font-family:'Archivo Black', sans-serif;
-    font-size: clamp(28px, 5vw, 42px);
-    letter-spacing: 1px;
+    font-size: clamp(26px, 4.5vw, 38px);
+    letter-spacing: .5px;
     margin: 0 0 4px;
+    line-height: 1.1;
   }
   header p{
     margin:0;
     font-family:'Space Mono', monospace;
-    font-size: 13px;
-    color: #C9D3E0;
+    font-size: 12.5px;
+    color: #AFC0DA;
     letter-spacing: .5px;
   }
 
@@ -109,23 +126,85 @@
     font-size: 11px;
     font-weight: 700;
     letter-spacing: .5px;
-    padding: 5px 10px;
+    padding: 6px 12px;
     border-radius: 20px;
     white-space: nowrap;
-    margin-top: 4px;
+    margin-top: 2px;
+    display:flex; align-items:center; gap:6px;
   }
-  .conn-badge.online{ background: rgba(46,125,50,.2); color: #7FE595; }
-  .conn-badge.offline{ background: rgba(214,69,80,.2); color: #FF8B94; }
+  .conn-badge::before{
+    content:""; width:7px; height:7px; border-radius:50%; background:currentColor;
+  }
+  .conn-badge.online{ background: rgba(46,168,84,.16); color: #4CD37A; }
+  .conn-badge.offline{ background: rgba(225,79,90,.18); color: #FF8B94; }
+
+  /* ---------- Layout principal ---------- */
+  main{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: clamp(16px, 3vw, 28px);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(16px, 2.5vw, 22px);
+    align-items: start;
+  }
+  .sync-banner, #config-warning{ grid-column: 1 / -1; }
+
+  @media (min-width: 860px){
+    main{ grid-template-columns: minmax(320px, 400px) 1fr; }
+    .panel-scanner{ position: sticky; top: 20px; }
+  }
+  @media (min-width: 1200px){
+    main{ grid-template-columns: 420px 1fr; }
+  }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: clamp(18px, 2.5vw, 24px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card h2{
+    display:flex; align-items:center; gap:9px;
+    font-family:'Archivo Black', sans-serif;
+    font-size: 14px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    margin: 0 0 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+    color: var(--navy);
+  }
+  .card h2::before{
+    content:"";
+    width:8px; height:8px; border-radius:2px;
+    background: var(--orange);
+    flex-shrink: 0;
+  }
+
+  /* ---------- Avisos ---------- */
+  #config-warning{
+    background: var(--orange-soft);
+    border:1px solid #FFCDB3;
+    color:#9A3B12;
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 14px 16px;
+    border-radius: var(--radius-sm);
+    display:none;
+  }
+  #config-warning code{ background:#fff; padding:1px 5px; border-radius:4px; font-size:12px; }
 
   .sync-banner{
     display:none;
-    background:#FFF4ED;
-    border:1px solid var(--orange);
+    background: var(--orange-soft);
+    border:1px solid #FFCDB3;
     color:#9A3B12;
     font-size: 13px;
-    padding: 12px 14px;
-    border-radius: 6px;
-    margin-bottom: 20px;
+    padding: 13px 16px;
+    border-radius: var(--radius-sm);
     align-items:center;
     justify-content:space-between;
     gap: 10px;
@@ -134,58 +213,9 @@
   .sync-banner.show{ display:flex; }
   .sync-banner button{
     background: var(--orange); color:#fff;
-    padding: 7px 12px; font-size: 12px;
+    padding: 8px 14px; font-size: 12px;
+    box-shadow: none;
   }
-
-  main{
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: clamp(16px, 3vw, 28px);
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: clamp(16px, 2.5vw, 24px);
-    align-items: start;
-  }
-
-  /* Estas dos ocupan siempre todo el ancho disponible, sea una o dos columnas */
-  .sync-banner, #config-warning{ grid-column: 1 / -1; }
-
-  /* ---------- Escritorio / tablet ancho: dos columnas lado a lado ---------- */
-  @media (min-width: 860px){
-    main{ grid-template-columns: minmax(320px, 400px) 1fr; }
-    .panel-scanner{ position: sticky; top: 20px; }
-  }
-
-  .card{
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 20px;
-  }
-
-  .card h2{
-    font-family:'Archivo Black', sans-serif;
-    font-size: 15px;
-    letter-spacing: .5px;
-    text-transform: uppercase;
-    margin: 0 0 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px dashed var(--line);
-    color: var(--navy);
-  }
-
-  /* ---------- Configuración ---------- */
-  #config-warning{
-    background:#FFF4ED;
-    border:1px solid var(--orange);
-    color:#9A3B12;
-    font-size: 13px;
-    padding: 12px 14px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    display:none;
-  }
-  #config-warning code{ background:#fff; padding:1px 5px; border-radius:3px; }
 
   /* ---------- Escáner ---------- */
   .scan-box{
@@ -193,22 +223,20 @@
     width: 100%;
     max-width: 420px;
     aspect-ratio: 4 / 3;
-    margin: 0 auto 14px;
-    border-radius: 6px;
+    margin: 0 auto 16px;
+    border-radius: var(--radius-sm);
     overflow: hidden;
     border: 1px solid var(--line);
     background: #0B0F16;
   }
   .scan-box video{
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
   }
   .scan-box .frame{
     position: absolute; inset: 16% 8%;
     border: 2px solid rgba(255,255,255,.55);
-    border-radius: 6px;
+    border-radius: 8px;
     pointer-events: none;
     display: none;
   }
@@ -219,152 +247,206 @@
     animation: sweep 2s ease-in-out infinite;
     display: none;
   }
-  @keyframes sweep{
-    0%,100%{ top: 20%; }
-    50%{ top: 80%; }
-  }
+  @keyframes sweep{ 0%,100%{ top: 20%; } 50%{ top: 80%; } }
   .scan-box.activo .frame, .scan-box.activo .laser{ display: block; }
   .scan-box .idle-msg{
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    color: #8B95A6;
+    color: #7C879C;
     font-family: 'Space Mono', monospace;
     font-size: 12px;
     letter-spacing: .5px;
     text-align: center;
-    padding: 0 20px;
+    padding: 0 24px;
+    line-height: 1.5;
   }
   .scan-box.activo .idle-msg{ display: none; }
 
   .scanner-actions{
-    display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom: 18px;
+    display:flex; gap:10px; margin-bottom: 20px;
   }
+  .scanner-actions button{ flex: 1; }
 
+  /* ---------- Formulario ---------- */
   .form-grid{
     display:grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 14px;
   }
   .form-grid .full{ grid-column: 1 / -1; }
 
   label{
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 11.5px;
+    font-weight: 700;
     color: var(--ink-soft);
     text-transform: uppercase;
-    letter-spacing: .4px;
+    letter-spacing: .5px;
     display:block;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
   }
 
   input{
     width: 100%;
-    padding: 10px 12px;
+    padding: 11px 13px;
     border: 1px solid var(--line);
-    border-radius: 5px;
+    border-radius: var(--radius-sm);
     font-family: 'Space Mono', monospace;
-    font-size: 16px; /* 16px o más evita que Safari/Chrome en iOS hagan zoom al enfocar */
-    background: #FBFBFC;
+    font-size: 16px; /* evita el zoom automático de iOS al enfocar */
+    background: var(--surface-alt);
+    color: var(--ink);
+    transition: border-color .15s, box-shadow .15s, background .15s;
   }
-  input:focus{ outline: 2px solid var(--orange); outline-offset: 1px; }
+  input::placeholder{ color: var(--ink-faint); font-family:'Inter', sans-serif; font-size: 13.5px; }
+  input:focus{
+    outline: none;
+    border-color: var(--orange);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px rgba(255,106,53,.15);
+  }
 
   button{
     font-family: 'Inter', sans-serif;
-    font-weight: 600;
-    font-size: 13px;
-    border: none;
-    border-radius: 5px;
-    padding: 11px 18px;
+    font-weight: 700;
+    font-size: 13.5px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 12px 18px;
     cursor: pointer;
-    transition: transform .05s ease, opacity .15s ease;
+    transition: transform .1s ease, filter .15s ease, box-shadow .15s ease;
   }
-  button:active{ transform: scale(.97); }
-  button:disabled{ opacity:.5; cursor:not-allowed; }
+  button:hover:not(:disabled){ filter: brightness(1.06); }
+  button:active:not(:disabled){ transform: scale(.97); }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
 
-  .btn-primary{ background: var(--navy); color:#fff; }
-  .btn-scan{ background: var(--orange); color:#fff; }
-  .btn-stop{ background: var(--ink-soft); color:#fff; }
-  .btn-danger{ background: var(--red); color:#fff; }
-  .btn-full{ width: 100%; margin-top: 14px; }
+  .btn-primary{ background: var(--navy); color:#fff; box-shadow: var(--shadow-sm); }
+  .btn-scan{ background: var(--orange); color:#fff; box-shadow: var(--shadow-sm); }
+  .btn-stop{ background: var(--surface); color: var(--ink); border-color: var(--line); }
+  .btn-full{ width: 100%; margin-top: 16px; padding: 13px 18px; font-size: 14px; }
 
-  /* ---------- Lista / manifiesto ---------- */
-  .summary{
-    display:flex; justify-content: space-between; align-items:baseline;
+  /* ---------- Encabezado de la lista / stats ---------- */
+  .list-header{
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap: wrap; gap: 12px;
     margin-bottom: 4px;
   }
-  .summary .count{
+  .list-header h2{ margin:0; padding:0; border:none; }
+  .stats{ display:flex; gap: 8px; flex-wrap: wrap; }
+  .stat-chip{
     font-family:'Space Mono', monospace;
-    font-size: 13px;
-    color: var(--ink-soft);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--navy-soft);
+    background: var(--surface-alt);
+    border: 1px solid var(--line);
+    padding: 6px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
   }
+  .stat-chip b{ color: var(--orange); font-size: 13px; margin-right: 3px; }
 
-  table{ width:100%; border-collapse: collapse; margin-top: 10px; }
+  /* ---------- Tabla (escritorio / tablet) ---------- */
+  .table-wrap{ margin-top: 18px; }
+  table{ width:100%; border-collapse: separate; border-spacing: 0; }
   thead th{
     text-align:left;
-    font-size: 11px;
+    font-size: 10.5px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: .4px;
+    letter-spacing: .6px;
     color: var(--ink-soft);
-    padding: 8px 6px;
+    background: var(--surface-alt);
+    padding: 11px 14px;
     border-bottom: 1px solid var(--line);
   }
-  tbody tr{ border-bottom: 1px dashed var(--line); }
-  tbody tr:last-child{ border-bottom: none; }
-  tbody td{ padding: 10px 6px; font-size: 14px; vertical-align: middle; }
-  td.mono{ font-family:'Space Mono', monospace; font-size: 13px; }
-  td.qty{ font-family:'Space Mono', monospace; font-weight:700; }
+  thead th:first-child{ border-top-left-radius: var(--radius-sm); }
+  thead th:last-child{ border-top-right-radius: var(--radius-sm); text-align: right; }
+
+  tbody tr{ transition: background .12s; }
+  tbody tr:hover{ background: var(--surface-alt); }
+  tbody tr:not(:last-child) td{ border-bottom: 1px solid var(--line); }
+  tbody td{ padding: 13px 14px; font-size: 14px; vertical-align: middle; }
+  td.mono{ font-family:'Space Mono', monospace; font-size: 13px; color: var(--ink-soft); }
+  td.nombre{ font-weight: 600; }
+  td.precio{ font-family:'Space Mono', monospace; font-size: 13.5px; text-align:right; color: var(--ink-soft); }
+  td.acciones{ text-align: right; }
 
   .qty-controls{ display:flex; align-items:center; gap:8px; }
+  .qty-controls span{ min-width: 20px; text-align:center; font-family:'Space Mono', monospace; font-weight:700; }
   .qty-controls button{
-    width: 26px; height: 26px; padding:0;
-    border-radius: 4px;
-    background: var(--bg);
-    color: var(--ink);
+    width: 28px; height: 28px; padding:0;
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--navy);
     border: 1px solid var(--line);
     font-size: 15px; line-height: 1;
+    font-family: 'Inter', sans-serif;
   }
+  .qty-controls button:hover:not(:disabled){ border-color: var(--orange); color: var(--orange); filter:none; }
 
-  .row-delete{
-    background: transparent;
+  .btn-icon-delete{
+    width: 32px; height: 32px; padding: 0;
+    border-radius: 50%;
+    background: var(--red-soft);
+    border: 1px solid #FBD4D8;
     color: var(--red);
-    border: 1px solid var(--red);
-    padding: 6px 10px;
-    font-size: 12px;
+    display: inline-flex; align-items:center; justify-content:center;
   }
+  .btn-icon-delete:hover:not(:disabled){ background: var(--red); color:#fff; filter:none; }
+  .btn-icon-delete svg{ width: 15px; height: 15px; }
 
   .empty-state{
     text-align:center;
-    padding: 30px 10px;
-    color: var(--ink-soft);
-    font-size: 14px;
+    padding: 44px 16px;
+    color: var(--ink-faint);
   }
+  .empty-state svg{ margin-bottom: 10px; opacity: .5; }
+  .empty-state p{ font-size: 13.5px; margin:0; }
 
   #status-msg{
     font-family: 'Space Mono', monospace;
     font-size: 12px;
     text-align:center;
     color: var(--ink-soft);
-    margin-top: 6px;
+    margin-top: 10px;
     min-height: 16px;
   }
   #status-msg.error{ color: var(--red); }
   #status-msg.ok{ color: var(--green); }
 
-  /* ---------- Móvil (una sola columna, todo apilado) ---------- */
-  @media (max-width: 520px){
+  /* ---------- Móvil: la tabla se convierte en tarjetas apiladas ---------- */
+  @media (max-width: 640px){
     .form-grid{ grid-template-columns: 1fr; }
-    .card{ padding: 16px; }
-    .scanner-actions{ flex-direction: column; }
-    .scanner-actions button{ width: 100%; }
-    table{ display:block; overflow-x:auto; white-space:nowrap; -webkit-overflow-scrolling: touch; }
     header .content{ flex-direction: column; align-items: flex-start; }
-    .conn-badge{ margin-top: 0; }
-  }
 
-  /* ---------- Pantallas grandes: un poco más de aire ---------- */
-  @media (min-width: 1200px){
-    main{ grid-template-columns: 420px 1fr; }
-    .card{ padding: 26px; }
+    .table-wrap thead{ display:none; }
+    .table-wrap table, .table-wrap tbody, .table-wrap tr, .table-wrap td{ display:block; width:100%; }
+    .table-wrap tr{
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    .table-wrap tr:hover{ background: var(--surface); }
+    .table-wrap tr:not(:last-child) td{ border-bottom: none; }
+    .table-wrap td{
+      display:flex; justify-content:space-between; align-items:center;
+      padding: 6px 0; border: none; text-align: left;
+    }
+    .table-wrap td::before{
+      content: attr(data-label);
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .5px; color: var(--ink-faint);
+      font-family: 'Inter', sans-serif;
+    }
+    .table-wrap td.precio{ text-align:left; }
+    .table-wrap td.acciones{
+      justify-content: flex-end; padding-top: 10px; margin-top: 4px;
+      border-top: 1px dashed var(--line);
+    }
+    .table-wrap td.acciones::before{ content: ''; }
+    .table-wrap td.nombre{ font-size: 15px; }
   }
 </style>
 </head>
@@ -434,25 +516,44 @@
 
   <!-- LISTA -->
   <section class="card panel-lista">
-    <div class="summary">
-      <h2 style="border:none; margin:0; padding:0;">Existencias actuales</h2>
-      <span class="count" id="total-count">0 artículos</span>
+    <div class="list-header">
+      <h2>Existencias actuales</h2>
+      <div class="stats">
+        <span class="stat-chip"><b id="stat-articulos">0</b>artículos</span>
+        <span class="stat-chip"><b id="stat-unidades">0</b>unidades</span>
+      </div>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Código</th>
-          <th>Producto</th>
-          <th>Cantidad</th>
-          <th>Precio</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="tabla-inventario">
-      </tbody>
-    </table>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tabla-inventario"></tbody>
+      </table>
+    </div>
+
     <div class="empty-state" id="empty-state" style="display:none;">
-      Aún no hay artículos. Escanea o agrega uno arriba.
+      <svg width="40" height="26" viewBox="0 0 40 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="2" height="26" fill="#98A2B3"/>
+        <rect x="4" y="0" width="1" height="26" fill="#98A2B3"/>
+        <rect x="7" y="0" width="3" height="26" fill="#98A2B3"/>
+        <rect x="12" y="0" width="1" height="26" fill="#98A2B3"/>
+        <rect x="15" y="0" width="2" height="26" fill="#98A2B3"/>
+        <rect x="19" y="0" width="1" height="26" fill="#98A2B3"/>
+        <rect x="22" y="0" width="3" height="26" fill="#98A2B3"/>
+        <rect x="27" y="0" width="1" height="26" fill="#98A2B3"/>
+        <rect x="30" y="0" width="2" height="26" fill="#98A2B3"/>
+        <rect x="34" y="0" width="1" height="26" fill="#98A2B3"/>
+        <rect x="37" y="0" width="3" height="26" fill="#98A2B3"/>
+      </svg>
+      <p>Aún no hay artículos. Escanea o agrega uno arriba.</p>
     </div>
   </section>
 
@@ -479,13 +580,16 @@
      ========================================================= */
   const tabla = document.getElementById('tabla-inventario');
   const emptyState = document.getElementById('empty-state');
-  const totalCount = document.getElementById('total-count');
+  const statArticulos = document.getElementById('stat-articulos');
+  const statUnidades = document.getElementById('stat-unidades');
   const statusMsg = document.getElementById('status-msg');
   const form = document.getElementById('form-item');
   const connBadge = document.getElementById('conn-badge');
   const syncBanner = document.getElementById('sync-banner');
   const syncBannerText = document.getElementById('sync-banner-text');
   const btnSyncNow = document.getElementById('btn-sync-now');
+
+  const ICONO_BASURA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>';
 
   function setStatus(texto, tipo) {
     statusMsg.textContent = texto;
@@ -561,23 +665,26 @@
 
   function dibujarInventario(items) {
     tabla.innerHTML = '';
-    totalCount.textContent = items.length + (items.length === 1 ? ' artículo' : ' artículos');
+    statArticulos.textContent = items.length;
+    statUnidades.textContent = items.reduce((s, it) => s + (parseInt(it.cantidad, 10) || 0), 0);
     emptyState.style.display = items.length === 0 ? 'block' : 'none';
 
     items.forEach(item => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td class="mono">${item.codigo_barra}</td>
-        <td>${item.nombre}</td>
-        <td class="qty">
+        <td class="mono" data-label="Código">${item.codigo_barra}</td>
+        <td class="nombre" data-label="Producto">${item.nombre}</td>
+        <td data-label="Cantidad">
           <div class="qty-controls">
-            <button data-id="${item.id}" data-delta="-1" class="btn-menos">−</button>
+            <button data-id="${item.id}" data-delta="-1" class="btn-menos" title="Restar uno">−</button>
             <span>${item.cantidad}</span>
-            <button data-id="${item.id}" data-delta="1" class="btn-mas">+</button>
+            <button data-id="${item.id}" data-delta="1" class="btn-mas" title="Sumar uno">+</button>
           </div>
         </td>
-        <td class="mono">$${Number(item.precio).toFixed(2)}</td>
-        <td><button class="row-delete" data-id="${item.id}">Eliminar</button></td>
+        <td class="precio" data-label="Precio">$${Number(item.precio).toFixed(2)}</td>
+        <td class="acciones" data-label="">
+          <button class="btn-icon-delete" data-id="${item.id}" title="Eliminar">${ICONO_BASURA}</button>
+        </td>
       `;
       tabla.appendChild(tr);
     });
@@ -637,7 +744,6 @@
       }
       guardarCache(cache);
 
-      // Registramos el cambio en la cola de sincronización
       const cola = leerCola();
       if (existente) {
         registrarCambioCantidad(cola, existente.id, existente.cantidad);
@@ -658,10 +764,12 @@
      6) BOTONES +/- Y ELIMINAR (delegación de eventos)
      ========================================================= */
   tabla.addEventListener('click', async (e) => {
-    const id = e.target.dataset.id;
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const id = btn.dataset.id;
     if (!id) return;
 
-    if (e.target.classList.contains('row-delete')) {
+    if (btn.classList.contains('btn-icon-delete')) {
       if (navigator.onLine && !esIdTemporal(id)) {
         const { error } = await sb.from('inventario').delete().eq('id', id);
         if (error) setStatus('Error al eliminar: ' + error.message, 'error');
@@ -672,8 +780,8 @@
       return;
     }
 
-    if (e.target.classList.contains('btn-mas') || e.target.classList.contains('btn-menos')) {
-      const delta = parseInt(e.target.dataset.delta, 10);
+    if (btn.classList.contains('btn-mas') || btn.classList.contains('btn-menos')) {
+      const delta = parseInt(btn.dataset.delta, 10);
 
       if (navigator.onLine && !esIdTemporal(id)) {
         const { data: actual } = await sb.from('inventario').select('cantidad').eq('id', id).single();
@@ -712,18 +820,15 @@
 
     let cola = leerCola();
     if (esIdTemporal(id)) {
-      // Nunca llegó a existir en Supabase: simplemente lo quitamos de la cola
       cola = cola.filter(op => op.tempId !== id);
     } else {
-      cola = cola.filter(op => op.id !== id); // quitamos ediciones previas de ese id
+      cola = cola.filter(op => op.id !== id);
       cola.push({ op: 'delete', id });
     }
     guardarCola(cola);
     setStatus('Sin conexión: eliminado en este dispositivo.', 'ok');
   }
 
-  // Actualiza (o agrega) la instrucción de cambio de cantidad para un id
-  // dentro de la cola, sin duplicar entradas para el mismo artículo.
   function registrarCambioCantidad(cola, id, nuevaCantidad) {
     if (esIdTemporal(id)) {
       const insercion = cola.find(op => op.op === 'insert' && op.tempId === id);
@@ -749,8 +854,7 @@
     setStatus('Sincronizando cambios pendientes...', 'ok');
 
     while (leerCola().length > 0) {
-      const colaActual = leerCola();
-      const op = colaActual[0];
+      const op = leerCola()[0];
       let ok = true;
 
       try {
@@ -779,10 +883,8 @@
         ok = false;
       }
 
-      if (!ok) break; // nos detenemos y lo reintentamos más adelante
-
-      const restante = leerCola().slice(1);
-      guardarCola(restante);
+      if (!ok) break;
+      guardarCola(leerCola().slice(1));
     }
 
     sincronizando = false;
@@ -811,8 +913,6 @@
 
   async function iniciarScanner() {
     try {
-      // decodeFromConstraints pide la cámara trasera y dibuja el video
-      // directo en el elemento con id="video"
       await codeReader.decodeFromConstraints(
         { video: { facingMode: "environment" } },
         'video',
@@ -824,8 +924,6 @@
             detenerScanner();
             document.getElementById('nombre').focus();
           }
-          // si "err" existe simplemente significa que ese frame no traía
-          // un código legible todavía; no es un error real, se ignora.
         }
       );
       escaneando = true;
@@ -895,7 +993,6 @@
     const blob = new Blob([swCode], { type: 'application/javascript' });
     navigator.serviceWorker.register(URL.createObjectURL(blob), { scope: './' })
       .then(() => {
-        // Guardamos también el documento actual apenas se registra el worker
         fetch(location.href).then(res => {
           caches.open('inventario-cache-v1').then(cache => cache.put(location.href, res));
         });
