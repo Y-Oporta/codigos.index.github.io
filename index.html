@@ -1,195 +1,898 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi App Offline</title>
-  
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="MiAppOffline">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23007aff'/><text x='50%' y='55%' dominant-baseline='central' text-anchor='middle' fill='white' font-size='50'>📱</text></svg>">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Inventario · Manifiesto de bodega</title>
 
-  <script>
+<!-- PWA: permite "Agregar a pantalla de inicio" y que abra sin barra de Safari -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Inventario">
+<meta name="theme-color" content="#1B2A45">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231B2A45'/><g fill='white'><rect x='20' y='30' width='4' height='40'/><rect x='28' y='30' width='2' height='40'/><rect x='34' y='30' width='6' height='40'/><rect x='44' y='30' width='2' height='40'/><rect x='50' y='30' width='4' height='40'/><rect x='58' y='30' width='2' height='40'/><rect x='64' y='30' width='6' height='40'/><rect x='74' y='30' width='2' height='40'/></g></svg>">
+
+<script>
+  // Genera el manifest.json "al vuelo" para que el navegador ofrezca
+  // instalar la app en la pantalla de inicio, sin necesitar un archivo aparte.
+  (function () {
+    const icono = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231B2A45'/><g fill='white'><rect x='20' y='30' width='4' height='40'/><rect x='28' y='30' width='2' height='40'/><rect x='34' y='30' width='6' height='40'/><rect x='44' y='30' width='2' height='40'/><rect x='50' y='30' width='4' height='40'/><rect x='58' y='30' width='2' height='40'/><rect x='64' y='30' width='6' height='40'/><rect x='74' y='30' width='2' height='40'/></g></svg>";
     const manifest = {
-      name: "Mi App Offline",
-      short_name: "MiApp",
-      start_url: "./index.html",
+      name: "Inventario · Manifiesto de bodega",
+      short_name: "Inventario",
+      start_url: window.location.href,
       display: "standalone",
-      background_color: "#f4f4f9",
-      theme_color: "#007aff",
-      icons: [{
-        src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23007aff'/><text x='50%' y='55%' dominant-baseline='central' text-anchor='middle' fill='white' font-size='50'>📱</text></svg>",
-        sizes: "192x192",
-        type: "image/svg+xml"
-      }]
+      background_color: "#EDEFF1",
+      theme_color: "#1B2A45",
+      icons: [{ src: icono, sizes: "512x512", type: "image/svg+xml" }]
     };
-    const stringManifest = JSON.stringify(manifest);
-    const blobManifest = new Blob([stringManifest], {type: 'application/json'});
-    const manifestURL = URL.createObjectURL(blobManifest);
-    const manifestLink = document.createElement('link');
-    manifestLink.rel = 'manifest';
-    manifestLink.href = manifestURL;
-    document.head.appendChild(manifestLink);
-  </script>
+    const blob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+    const link = document.createElement("link");
+    link.rel = "manifest";
+    link.href = URL.createObjectURL(blob);
+    document.head.appendChild(link);
+  })();
+</script>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    body {
-      background-color: #f4f4f9;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
-      text-align: center;
-    }
-    .card {
-      background: white;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      max-width: 400px;
-      width: 100%;
-    }
-    h1 {
-      font-size: 1.5rem;
-      margin-bottom: 12px;
-      color: #111;
-    }
-    p {
-      font-size: 0.95rem;
-      color: #666;
-      margin-bottom: 20px;
-      line-height: 1.4;
-    }
-    .status-badge {
-      display: inline-block;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: bold;
-      margin-bottom: 16px;
-    }
-    .online { background-color: #e6f4ea; color: #137333; }
-    .offline { background-color: #fce8e6; color: #c5221f; }
-    textarea {
-      width: 100%;
-      height: 120px;
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      resize: none;
-      font-size: 1rem;
-      margin-bottom: 12px;
-    }
-    button {
-      background-color: #007aff;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      width: 100%;
-    }
-    button:active {
-      opacity: 0.8;
-    }
-  </style>
+<!-- Fuentes -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Cliente de Supabase (habla con la base de datos vía REST) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Librería para leer códigos de barras con la cámara (ZXing: más confiable que html5-qrcode para códigos 1D como EAN/UPC/Code128) -->
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+
+<style>
+  :root{
+    --bg: #EDEFF1;
+    --surface: #FFFFFF;
+    --ink: #1F2430;
+    --ink-soft: #5B6472;
+    --navy: #1B2A45;
+    --orange: #FF6B35;
+    --green: #2E7D32;
+    --red: #D64550;
+    --line: #C9CDD3;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    padding-bottom: 60px;
+  }
+
+  /* ---------- Encabezado estilo etiqueta de embarque ---------- */
+  header{
+    position: relative;
+    background: var(--navy);
+    color: #fff;
+    padding: 28px 20px 22px;
+    overflow: hidden;
+  }
+  header::before{
+    content:"";
+    position:absolute; inset:0;
+    background: repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,.10) 0 2px,
+      transparent 2px 5px,
+      rgba(255,255,255,.10) 5px 6px,
+      transparent 6px 11px,
+      rgba(255,255,255,.10) 11px 14px,
+      transparent 14px 20px
+    );
+    opacity:.5;
+  }
+  header .content{ position:relative; max-width: 900px; margin:0 auto; display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  header h1{
+    font-family:'Archivo Black', sans-serif;
+    font-size: clamp(28px, 5vw, 42px);
+    letter-spacing: 1px;
+    margin: 0 0 4px;
+  }
+  header p{
+    margin:0;
+    font-family:'Space Mono', monospace;
+    font-size: 13px;
+    color: #C9D3E0;
+    letter-spacing: .5px;
+  }
+
+  .conn-badge{
+    flex-shrink: 0;
+    font-family:'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    margin-top: 4px;
+  }
+  .conn-badge.online{ background: rgba(46,125,50,.2); color: #7FE595; }
+  .conn-badge.offline{ background: rgba(214,69,80,.2); color: #FF8B94; }
+
+  .sync-banner{
+    display:none;
+    background:#FFF4ED;
+    border:1px solid var(--orange);
+    color:#9A3B12;
+    font-size: 13px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    align-items:center;
+    justify-content:space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .sync-banner.show{ display:flex; }
+  .sync-banner button{
+    background: var(--orange); color:#fff;
+    padding: 7px 12px; font-size: 12px;
+  }
+
+  main{
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 20px;
+    display: grid;
+    gap: 24px;
+  }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px;
+  }
+
+  .card h2{
+    font-family:'Archivo Black', sans-serif;
+    font-size: 15px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--line);
+    color: var(--navy);
+  }
+
+  /* ---------- Configuración ---------- */
+  #config-warning{
+    background:#FFF4ED;
+    border:1px solid var(--orange);
+    color:#9A3B12;
+    font-size: 13px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    display:none;
+  }
+  #config-warning code{ background:#fff; padding:1px 5px; border-radius:3px; }
+
+  /* ---------- Escáner ---------- */
+  .scan-box{
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    aspect-ratio: 4 / 3;
+    margin: 0 auto 14px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: #0B0F16;
+  }
+  .scan-box video{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .scan-box .frame{
+    position: absolute; inset: 16% 8%;
+    border: 2px solid rgba(255,255,255,.55);
+    border-radius: 6px;
+    pointer-events: none;
+    display: none;
+  }
+  .scan-box .laser{
+    position: absolute; left: 8%; right: 8%; top: 50%;
+    height: 2px; background: var(--orange);
+    box-shadow: 0 0 10px 1px var(--orange);
+    animation: sweep 2s ease-in-out infinite;
+    display: none;
+  }
+  @keyframes sweep{
+    0%,100%{ top: 20%; }
+    50%{ top: 80%; }
+  }
+  .scan-box.activo .frame, .scan-box.activo .laser{ display: block; }
+  .scan-box .idle-msg{
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #8B95A6;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: .5px;
+    text-align: center;
+    padding: 0 20px;
+  }
+  .scan-box.activo .idle-msg{ display: none; }
+
+  .scanner-actions{
+    display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom: 18px;
+  }
+
+  .form-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .form-grid .full{ grid-column: 1 / -1; }
+
+  label{
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    display:block;
+    margin-bottom: 5px;
+  }
+
+  input{
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    font-family: 'Space Mono', monospace;
+    font-size: 16px; /* 16px o más evita que Safari/Chrome en iOS hagan zoom al enfocar */
+    background: #FBFBFC;
+  }
+  input:focus{ outline: 2px solid var(--orange); outline-offset: 1px; }
+
+  button{
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    border-radius: 5px;
+    padding: 11px 18px;
+    cursor: pointer;
+    transition: transform .05s ease, opacity .15s ease;
+  }
+  button:active{ transform: scale(.97); }
+  button:disabled{ opacity:.5; cursor:not-allowed; }
+
+  .btn-primary{ background: var(--navy); color:#fff; }
+  .btn-scan{ background: var(--orange); color:#fff; }
+  .btn-stop{ background: var(--ink-soft); color:#fff; }
+  .btn-danger{ background: var(--red); color:#fff; }
+  .btn-full{ width: 100%; margin-top: 14px; }
+
+  /* ---------- Lista / manifiesto ---------- */
+  .summary{
+    display:flex; justify-content: space-between; align-items:baseline;
+    margin-bottom: 4px;
+  }
+  .summary .count{
+    font-family:'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  table{ width:100%; border-collapse: collapse; margin-top: 10px; }
+  thead th{
+    text-align:left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--ink-soft);
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  tbody tr{ border-bottom: 1px dashed var(--line); }
+  tbody tr:last-child{ border-bottom: none; }
+  tbody td{ padding: 10px 6px; font-size: 14px; vertical-align: middle; }
+  td.mono{ font-family:'Space Mono', monospace; font-size: 13px; }
+  td.qty{ font-family:'Space Mono', monospace; font-weight:700; }
+
+  .qty-controls{ display:flex; align-items:center; gap:8px; }
+  .qty-controls button{
+    width: 26px; height: 26px; padding:0;
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    font-size: 15px; line-height: 1;
+  }
+
+  .row-delete{
+    background: transparent;
+    color: var(--red);
+    border: 1px solid var(--red);
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .empty-state{
+    text-align:center;
+    padding: 30px 10px;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+
+  #status-msg{
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    text-align:center;
+    color: var(--ink-soft);
+    margin-top: 6px;
+    min-height: 16px;
+  }
+  #status-msg.error{ color: var(--red); }
+  #status-msg.ok{ color: var(--green); }
+
+  @media (max-width: 520px){
+    .form-grid{ grid-template-columns: 1fr; }
+    main{ padding: 18px 14px; gap: 18px; }
+    .card{ padding: 16px; }
+    header{ padding: 22px 16px 18px; }
+    .scanner-actions{ flex-direction: column; }
+    .scanner-actions button{ width: 100%; }
+    table{ display:block; overflow-x:auto; white-space:nowrap; }
+  }
+</style>
 </head>
 <body>
 
-  <div class="card">
-    <div id="status" class="status-badge online">Comprobando conexión...</div>
-    <h1>Aplicación Offline</h1>
-    <p>Esta aplicación se guarda localmente en Safari y funciona sin conexión a internet.</p>
-    
-    <textarea id="notes" placeholder="Escribe algo aquí... Se guardará en tu dispositivo."></textarea>
-    <button onclick="guardarNota()">Guardar Nota Local</button>
+<header>
+  <div class="content">
+    <div>
+      <h1>INVENTARIO</h1>
+      <p>MANIFIESTO DE BODEGA · PRACTICA CON SUPABASE</p>
+    </div>
+    <span class="conn-badge online" id="conn-badge">EN LÍNEA</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="sync-banner" id="sync-banner">
+    <span id="sync-banner-text">Sin conexión. Mostrando datos guardados en este dispositivo.</span>
+    <button id="btn-sync-now" style="display:none;">Sincronizar ahora</button>
   </div>
 
-  <script>
-    // Indicador del estado de red
-    function actualizarEstado() {
-      const statusEl = document.getElementById('status');
-      if (navigator.onLine) {
-        statusEl.textContent = "Conectado a Internet";
-        statusEl.className = "status-badge online";
+  <div id="config-warning">
+    ⚠️ No has configurado tu conexión a Supabase. Abre este archivo con un editor de texto,
+    busca <code>SUPABASE_URL</code> y <code>SUPABASE_ANON_KEY</code> al inicio del
+    <code>&lt;script&gt;</code>, y reemplázalos por los valores de tu proyecto
+    (Settings → API en supabase.com).
+  </div>
+
+  <!-- ESCÁNER -->
+  <section class="card">
+    <h2>Escanear artículo</h2>
+    <div class="scan-box" id="scan-box">
+      <video id="video" muted playsinline></video>
+      <div class="frame" id="frame"></div>
+      <div class="laser" id="laser"></div>
+      <div class="idle-msg">Pulsa "Iniciar cámara" y apunta al código de barras</div>
+    </div>
+    <div class="scanner-actions">
+      <button class="btn-scan" id="btn-start-scan">Iniciar cámara</button>
+      <button class="btn-stop" id="btn-stop-scan" disabled>Detener cámara</button>
+    </div>
+
+    <form id="form-item">
+      <div class="form-grid">
+        <div class="full">
+          <label for="codigo">Código de barras</label>
+          <input type="text" id="codigo" placeholder="Escanea o escribe el código" required>
+        </div>
+        <div class="full">
+          <label for="nombre">Nombre del producto</label>
+          <input type="text" id="nombre" placeholder="Ej. Cable USB-C 1m" required>
+        </div>
+        <div>
+          <label for="cantidad">Cantidad</label>
+          <input type="number" id="cantidad" min="1" value="1" required>
+        </div>
+        <div>
+          <label for="precio">Precio</label>
+          <input type="number" id="precio" min="0" step="0.01" value="0">
+        </div>
+      </div>
+      <button type="submit" class="btn-primary btn-full">Agregar al inventario</button>
+    </form>
+    <div id="status-msg"></div>
+  </section>
+
+  <!-- LISTA -->
+  <section class="card">
+    <div class="summary">
+      <h2 style="border:none; margin:0; padding:0;">Existencias actuales</h2>
+      <span class="count" id="total-count">0 artículos</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tabla-inventario">
+      </tbody>
+    </table>
+    <div class="empty-state" id="empty-state" style="display:none;">
+      Aún no hay artículos. Escanea o agrega uno arriba.
+    </div>
+  </section>
+
+</main>
+
+<script>
+  /* =========================================================
+     1) CONFIGURACIÓN — reemplaza estos dos valores con los
+        de tu proyecto en Supabase (Settings > API)
+     ========================================================= */
+  const SUPABASE_URL = "https://rwqhlzjmcauzlgdmayiq.supabase.co"; // aquí iba el Project URL
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3cWhsemptY2F1emxnZG1heWlxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NTI5MTUsImV4cCI6MjEwMzQyODkxNX0.JokglzgtGR1vOkU5XYzxsk_k5wYHJA_mPmFNtHp0R_M"; // aquí iba la anon public key
+
+  const NO_CONFIGURADO = SUPABASE_URL.includes("TU-PROYECTO") || SUPABASE_ANON_KEY.includes("TU_LLAVE");
+  if (NO_CONFIGURADO) {
+    document.getElementById('config-warning').style.display = 'block';
+  }
+
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  /* =========================================================
+     2) ELEMENTOS DEL DOM
+     ========================================================= */
+  const tabla = document.getElementById('tabla-inventario');
+  const emptyState = document.getElementById('empty-state');
+  const totalCount = document.getElementById('total-count');
+  const statusMsg = document.getElementById('status-msg');
+  const form = document.getElementById('form-item');
+  const connBadge = document.getElementById('conn-badge');
+  const syncBanner = document.getElementById('sync-banner');
+  const syncBannerText = document.getElementById('sync-banner-text');
+  const btnSyncNow = document.getElementById('btn-sync-now');
+
+  function setStatus(texto, tipo) {
+    statusMsg.textContent = texto;
+    statusMsg.className = tipo || '';
+  }
+
+  /* =========================================================
+     3) ALMACENAMIENTO LOCAL (funciona sin conexión)
+     Guardamos dos cosas en localStorage de este dispositivo:
+     - CACHE_KEY: la última copia conocida del inventario, para
+       poder mostrarla aunque no haya internet.
+     - QUEUE_KEY: la lista de cambios hechos sin conexión, que
+       se enviarán a Supabase en cuanto vuelva la señal.
+     ========================================================= */
+  const CACHE_KEY = 'inventario_cache_v1';
+  const QUEUE_KEY = 'inventario_cola_v1';
+
+  function leerCache() {
+    try { return JSON.parse(localStorage.getItem(CACHE_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function guardarCache(items) {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(items));
+  }
+  function leerCola() {
+    try { return JSON.parse(localStorage.getItem(QUEUE_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function guardarCola(cola) {
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(cola));
+    actualizarBannerSync();
+  }
+
+  function actualizarBannerSync() {
+    const pendientes = leerCola().length;
+    if (!navigator.onLine) {
+      syncBanner.classList.add('show');
+      syncBannerText.textContent = pendientes > 0
+        ? `Sin conexión. Tienes ${pendientes} cambio(s) guardados en este dispositivo, pendientes de subir.`
+        : 'Sin conexión. Mostrando datos guardados en este dispositivo.';
+      btnSyncNow.style.display = 'none';
+    } else if (pendientes > 0) {
+      syncBanner.classList.add('show');
+      syncBannerText.textContent = `Hay conexión. ${pendientes} cambio(s) pendientes de subir.`;
+      btnSyncNow.style.display = 'inline-block';
+    } else {
+      syncBanner.classList.remove('show');
+    }
+  }
+
+  /* =========================================================
+     4) CARGAR Y DIBUJAR EL INVENTARIO
+     Si hay conexión, pide los datos frescos a Supabase y
+     actualiza la caché local. Si no hay conexión, dibuja
+     directo lo último que quedó guardado en este dispositivo.
+     ========================================================= */
+  async function cargarInventario() {
+    if (navigator.onLine) {
+      const { data, error } = await sb
+        .from('inventario')
+        .select('*')
+        .order('creado_en', { ascending: false });
+
+      if (!error) {
+        guardarCache(data);
+        dibujarInventario(data);
+        return;
+      }
+      setStatus('No se pudo conectar a la base de datos, mostrando datos locales.', 'error');
+    }
+    dibujarInventario(leerCache());
+  }
+
+  function dibujarInventario(items) {
+    tabla.innerHTML = '';
+    totalCount.textContent = items.length + (items.length === 1 ? ' artículo' : ' artículos');
+    emptyState.style.display = items.length === 0 ? 'block' : 'none';
+
+    items.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="mono">${item.codigo_barra}</td>
+        <td>${item.nombre}</td>
+        <td class="qty">
+          <div class="qty-controls">
+            <button data-id="${item.id}" data-delta="-1" class="btn-menos">−</button>
+            <span>${item.cantidad}</span>
+            <button data-id="${item.id}" data-delta="1" class="btn-mas">+</button>
+          </div>
+        </td>
+        <td class="mono">$${Number(item.precio).toFixed(2)}</td>
+        <td><button class="row-delete" data-id="${item.id}">Eliminar</button></td>
+      `;
+      tabla.appendChild(tr);
+    });
+  }
+
+  /* =========================================================
+     5) AGREGAR ARTÍCULO
+     Con conexión: se manda directo a Supabase, igual que antes.
+     Sin conexión: se guarda en la caché local con un id
+     temporal ("tmp_...") y se anota en la cola para subirlo
+     después.
+     ========================================================= */
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const codigo = document.getElementById('codigo').value.trim();
+    const nombre = document.getElementById('nombre').value.trim();
+    const cantidad = parseInt(document.getElementById('cantidad').value, 10) || 0;
+    const precio = parseFloat(document.getElementById('precio').value) || 0;
+
+    if (navigator.onLine) {
+      const { data: existente } = await sb
+        .from('inventario')
+        .select('id, cantidad')
+        .eq('codigo_barra', codigo)
+        .maybeSingle();
+
+      let error;
+      if (existente) {
+        ({ error } = await sb.from('inventario')
+          .update({ cantidad: existente.cantidad + cantidad })
+          .eq('id', existente.id));
       } else {
-        statusEl.textContent = "Modo Sin Conexión";
-        statusEl.className = "status-badge offline";
+        ({ error } = await sb.from('inventario')
+          .insert({ codigo_barra: codigo, nombre, cantidad, precio }));
+      }
+
+      if (error) {
+        setStatus('Error al guardar: ' + error.message, 'error');
+        return;
+      }
+      setStatus('Artículo guardado correctamente.', 'ok');
+      cargarInventario();
+    } else {
+      // --- Modo sin conexión ---
+      const cache = leerCache();
+      const existente = cache.find(it => it.codigo_barra === codigo);
+
+      if (existente) {
+        existente.cantidad += cantidad;
+      } else {
+        const tempId = 'tmp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+        cache.unshift({
+          id: tempId, codigo_barra: codigo, nombre, cantidad, precio,
+          creado_en: new Date().toISOString()
+        });
+      }
+      guardarCache(cache);
+
+      // Registramos el cambio en la cola de sincronización
+      const cola = leerCola();
+      if (existente) {
+        registrarCambioCantidad(cola, existente.id, existente.cantidad);
+      } else {
+        cola.push({ op: 'insert', tempId: cache[0].id, codigo_barra: codigo, nombre, cantidad, precio });
+      }
+      guardarCola(cola);
+
+      setStatus('Sin conexión: guardado en este dispositivo, se subirá automáticamente después.', 'ok');
+      dibujarInventario(cache);
+    }
+
+    form.reset();
+    document.getElementById('cantidad').value = 1;
+  });
+
+  /* =========================================================
+     6) BOTONES +/- Y ELIMINAR (delegación de eventos)
+     ========================================================= */
+  tabla.addEventListener('click', async (e) => {
+    const id = e.target.dataset.id;
+    if (!id) return;
+
+    if (e.target.classList.contains('row-delete')) {
+      if (navigator.onLine && !esIdTemporal(id)) {
+        const { error } = await sb.from('inventario').delete().eq('id', id);
+        if (error) setStatus('Error al eliminar: ' + error.message, 'error');
+        cargarInventario();
+      } else {
+        eliminarLocal(id);
+      }
+      return;
+    }
+
+    if (e.target.classList.contains('btn-mas') || e.target.classList.contains('btn-menos')) {
+      const delta = parseInt(e.target.dataset.delta, 10);
+
+      if (navigator.onLine && !esIdTemporal(id)) {
+        const { data: actual } = await sb.from('inventario').select('cantidad').eq('id', id).single();
+        const nuevaCantidad = Math.max(0, actual.cantidad + delta);
+        const { error } = await sb.from('inventario').update({ cantidad: nuevaCantidad }).eq('id', id);
+        if (error) setStatus('Error al actualizar: ' + error.message, 'error');
+        cargarInventario();
+      } else {
+        ajustarCantidadLocal(id, delta);
       }
     }
-    window.addEventListener('online', actualizarEstado);
-    window.addEventListener('offline', actualizarEstado);
-    actualizarEstado();
+  });
 
-    // Guardado local de datos
-    const textarea = document.getElementById('notes');
-    textarea.value = localStorage.getItem('nota_guardada') || '';
-    
-    function guardarNota() {
-      localStorage.setItem('nota_guardada', textarea.value);
-      alert('Nota guardada correctamente en el dispositivo.');
+  function esIdTemporal(id) {
+    return String(id).startsWith('tmp_');
+  }
+
+  function ajustarCantidadLocal(id, delta) {
+    const cache = leerCache();
+    const item = cache.find(it => String(it.id) === String(id));
+    if (!item) return;
+    item.cantidad = Math.max(0, item.cantidad + delta);
+    guardarCache(cache);
+    dibujarInventario(cache);
+
+    const cola = leerCola();
+    registrarCambioCantidad(cola, id, item.cantidad);
+    guardarCola(cola);
+    setStatus('Sin conexión: cambio guardado en este dispositivo.', 'ok');
+  }
+
+  function eliminarLocal(id) {
+    let cache = leerCache().filter(it => String(it.id) !== String(id));
+    guardarCache(cache);
+    dibujarInventario(cache);
+
+    let cola = leerCola();
+    if (esIdTemporal(id)) {
+      // Nunca llegó a existir en Supabase: simplemente lo quitamos de la cola
+      cola = cola.filter(op => op.tempId !== id);
+    } else {
+      cola = cola.filter(op => op.id !== id); // quitamos ediciones previas de ese id
+      cola.push({ op: 'delete', id });
+    }
+    guardarCola(cola);
+    setStatus('Sin conexión: eliminado en este dispositivo.', 'ok');
+  }
+
+  // Actualiza (o agrega) la instrucción de cambio de cantidad para un id
+  // dentro de la cola, sin duplicar entradas para el mismo artículo.
+  function registrarCambioCantidad(cola, id, nuevaCantidad) {
+    if (esIdTemporal(id)) {
+      const insercion = cola.find(op => op.op === 'insert' && op.tempId === id);
+      if (insercion) insercion.cantidad = nuevaCantidad;
+      return;
+    }
+    const idx = cola.findIndex(op => op.op === 'update' && op.id === id);
+    if (idx >= 0) cola[idx].cantidad = nuevaCantidad;
+    else cola.push({ op: 'update', id, cantidad: nuevaCantidad });
+  }
+
+  /* =========================================================
+     7) SINCRONIZACIÓN — sube la cola pendiente a Supabase
+     ========================================================= */
+  let sincronizando = false;
+
+  async function sincronizar() {
+    if (sincronizando || !navigator.onLine || NO_CONFIGURADO) return;
+    const cola = leerCola();
+    if (cola.length === 0) return;
+
+    sincronizando = true;
+    setStatus('Sincronizando cambios pendientes...', 'ok');
+
+    while (leerCola().length > 0) {
+      const colaActual = leerCola();
+      const op = colaActual[0];
+      let ok = true;
+
+      try {
+        if (op.op === 'insert') {
+          const { data: existente } = await sb.from('inventario')
+            .select('id, cantidad').eq('codigo_barra', op.codigo_barra).maybeSingle();
+
+          if (existente) {
+            const { error } = await sb.from('inventario')
+              .update({ cantidad: existente.cantidad + op.cantidad })
+              .eq('id', existente.id);
+            ok = !error;
+          } else {
+            const { error } = await sb.from('inventario')
+              .insert({ codigo_barra: op.codigo_barra, nombre: op.nombre, cantidad: op.cantidad, precio: op.precio });
+            ok = !error;
+          }
+        } else if (op.op === 'update') {
+          const { error } = await sb.from('inventario').update({ cantidad: op.cantidad }).eq('id', op.id);
+          ok = !error;
+        } else if (op.op === 'delete') {
+          const { error } = await sb.from('inventario').delete().eq('id', op.id);
+          ok = !error;
+        }
+      } catch (e) {
+        ok = false;
+      }
+
+      if (!ok) break; // nos detenemos y lo reintentamos más adelante
+
+      const restante = leerCola().slice(1);
+      guardarCola(restante);
     }
 
-    // Registro del Service Worker empacado en el mismo archivo (Blob Inline)
-    if ('serviceWorker' in navigator) {
-      const swCode = `
-        const CACHE_NAME = 'app-offline-v1';
-        const urlsToCache = [location.href];
+    sincronizando = false;
 
-        self.addEventListener('install', (event) => {
-          event.waitUntil(
-            caches.open(CACHE_NAME).then((cache) => {
-              return cache.add(location.href);
-            })
-          );
-          self.skipWaiting();
-        });
+    if (leerCola().length === 0) {
+      setStatus('Todo sincronizado con la base de datos.', 'ok');
+    } else {
+      setStatus('Sincronización incompleta, se reintentará más adelante.', 'error');
+    }
+    cargarInventario();
+  }
 
-        self.addEventListener('activate', (event) => {
-          event.waitUntil(clients.claim());
-        });
+  btnSyncNow.addEventListener('click', sincronizar);
 
-        self.addEventListener('fetch', (event) => {
-          event.respondWith(
-            caches.match(event.request).then((cachedResponse) => {
-              if (cachedResponse) {
-                return cachedResponse;
+  /* =========================================================
+     8) ESCÁNER DE CÓDIGO DE BARRAS (cámara) — con ZXing
+     ========================================================= */
+  const codeReader = new ZXing.BrowserMultiFormatReader();
+  const scanBox = document.getElementById('scan-box');
+  const btnStart = document.getElementById('btn-start-scan');
+  const btnStop = document.getElementById('btn-stop-scan');
+  let escaneando = false;
+
+  btnStart.addEventListener('click', iniciarScanner);
+  btnStop.addEventListener('click', detenerScanner);
+
+  async function iniciarScanner() {
+    try {
+      // decodeFromConstraints pide la cámara trasera y dibuja el video
+      // directo en el elemento con id="video"
+      await codeReader.decodeFromConstraints(
+        { video: { facingMode: "environment" } },
+        'video',
+        (resultado, err) => {
+          if (resultado) {
+            const texto = resultado.getText();
+            document.getElementById('codigo').value = texto;
+            setStatus('Código detectado: ' + texto, 'ok');
+            detenerScanner();
+            document.getElementById('nombre').focus();
+          }
+          // si "err" existe simplemente significa que ese frame no traía
+          // un código legible todavía; no es un error real, se ignora.
+        }
+      );
+      escaneando = true;
+      scanBox.classList.add('activo');
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+    } catch (err) {
+      setStatus('No se pudo acceder a la cámara. Revisa permisos y que la página esté en HTTPS o localhost.', 'error');
+      console.error(err);
+    }
+  }
+
+  function detenerScanner() {
+    if (escaneando) {
+      codeReader.reset();
+      escaneando = false;
+    }
+    scanBox.classList.remove('activo');
+    btnStart.disabled = false;
+    btnStop.disabled = true;
+  }
+
+  /* =========================================================
+     9) DETECCIÓN DE CONEXIÓN
+     ========================================================= */
+  function actualizarEstadoConexion() {
+    if (navigator.onLine) {
+      connBadge.textContent = 'EN LÍNEA';
+      connBadge.className = 'conn-badge online';
+      sincronizar();
+    } else {
+      connBadge.textContent = 'SIN CONEXIÓN';
+      connBadge.className = 'conn-badge offline';
+    }
+    actualizarBannerSync();
+  }
+  window.addEventListener('online', actualizarEstadoConexion);
+  window.addEventListener('offline', actualizarEstadoConexion);
+
+  /* =========================================================
+     10) SERVICE WORKER — permite abrir la app desde el ícono
+     de la pantalla de inicio incluso sin conexión.
+     Importante: necesitas abrir la app AL MENOS UNA VEZ con
+     internet (y por HTTPS, no file://) para que esta primera
+     carga quede guardada. Después de eso ya abre sin señal.
+     ========================================================= */
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+      const CACHE_NAME = 'inventario-cache-v1';
+      self.addEventListener('install', () => self.skipWaiting());
+      self.addEventListener('activate', (event) => event.waitUntil(clients.claim()));
+      self.addEventListener('fetch', (event) => {
+        event.respondWith(
+          caches.match(event.request).then((cached) => {
+            if (cached) return cached;
+            return fetch(event.request).then((respuesta) => {
+              if (respuesta && respuesta.status === 200) {
+                const copia = respuesta.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copia));
               }
-              return fetch(event.request).then((networkResponse) => {
-                if (networkResponse && networkResponse.status === 200) {
-                  const responseToCache = networkResponse.clone();
-                  caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, responseToCache);
-                  });
-                }
-                return networkResponse;
-              });
-            }).catch(() => {
-              return caches.match(location.href);
-            })
-          );
+              return respuesta;
+            }).catch(() => caches.match('./') || caches.match(location.href));
+          })
+        );
+      });
+    `;
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    navigator.serviceWorker.register(URL.createObjectURL(blob), { scope: './' })
+      .then(() => {
+        // Guardamos también el documento actual apenas se registra el worker
+        fetch(location.href).then(res => {
+          caches.open('inventario-cache-v1').then(cache => cache.put(location.href, res));
         });
-      `;
+      })
+      .catch(err => console.error('No se pudo registrar el Service Worker:', err));
+  }
 
-      const blob = new Blob([swCode], { type: 'application/javascript' });
-      const workerUrl = URL.createObjectURL(blob);
+  /* =========================================================
+     11) CARGA INICIAL
+     ========================================================= */
+  if (!NO_CONFIGURADO) {
+    actualizarEstadoConexion();
+    cargarInventario();
+  }
+</script>
 
-      navigator.serviceWorker.register(workerUrl, { scope: './' })
-        .then(() => console.log('Service Worker listo para funcionamiento offline.'))
-        .catch(err => console.error('Error al registrar Service Worker:', err));
-    }
-  </script>
 </body>
 </html>
