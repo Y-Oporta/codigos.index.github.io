@@ -2,14 +2,24 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d1217">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>StockPro - Sistema de Ventas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+
 
 <style>
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 :root {
@@ -22,6 +32,7 @@
     --muted: #8996a3;
     --primary: #54b8b0;
     --primary-dark: #3f9d96;
+    --primary-glow: rgba(84, 184, 176, 0.35);
     --success: #61c58a;
     --warning: #e2b04f;
     --danger: #e56b6f;
@@ -29,6 +40,10 @@
     --radius-md: 10px;
     --radius-lg: 14px;
     --sidebar-width: 260px;
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.25);
+    --shadow-md: 0 8px 24px rgba(0,0,0,0.35);
+    --shadow-lg: 0 20px 48px rgba(0,0,0,0.5);
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 html, body {
@@ -38,6 +53,35 @@ html, body {
     color: var(--text);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: none;
+}
+
+button, input, select, textarea {
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+a { -webkit-tap-highlight-color: transparent; }
+
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+button:focus-visible, .product:focus-visible {
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 
 ::-webkit-scrollbar {
@@ -60,6 +104,7 @@ html, body {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.7);
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     z-index: 900;
     display: none;
@@ -328,6 +373,7 @@ html, body {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     overflow: hidden;
+    box-shadow: var(--shadow-sm);
 }
 
 .products-top {
@@ -337,9 +383,17 @@ html, body {
 }
 
 .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-input-wrap {
     position: relative;
     display: flex;
     align-items: center;
+    flex: 1;
+    min-width: 0;
 }
 
 .search-icon {
@@ -389,6 +443,173 @@ html, body {
     color: var(--text);
 }
 
+/* ===== SCAN BUTTON ===== */
+.scan-btn {
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    background: var(--input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s var(--ease);
+}
+
+.scan-btn:hover {
+    background: rgba(84, 184, 176, 0.1);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.scan-btn:active {
+    transform: scale(0.94);
+}
+
+.scan-btn svg { width: 22px; height: 22px; }
+
+/* ===== BARCODE SCANNER MODAL ===== */
+.scanner-modal {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    display: none;
+    z-index: 500;
+    flex-direction: column;
+}
+
+.scanner-modal.active {
+    display: flex;
+}
+
+.scanner-topbar {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: max(14px, env(safe-area-inset-top)) 16px 14px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.75), transparent);
+}
+
+.scanner-topbar h3 {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.scanner-topbar button {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.scanner-topbar button:hover { background: rgba(255,255,255,0.22); }
+
+.scanner-viewport {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scanner-viewport video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.scanner-frame {
+    position: absolute;
+    inset: 12% 8%;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-radius: 16px;
+    pointer-events: none;
+}
+
+.scanner-frame::before, .scanner-frame::after {
+    content: '';
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border-color: var(--primary);
+    border-style: solid;
+    border-width: 0;
+}
+
+.scanner-corner {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--primary);
+}
+.scanner-corner.tl { top: -3px; left: -3px; border-right: none; border-bottom: none; border-radius: 10px 0 0 0; }
+.scanner-corner.tr { top: -3px; right: -3px; border-left: none; border-bottom: none; border-radius: 0 10px 0 0; }
+.scanner-corner.bl { bottom: -3px; left: -3px; border-right: none; border-top: none; border-radius: 0 0 0 10px; }
+.scanner-corner.br { bottom: -3px; right: -3px; border-left: none; border-top: none; border-radius: 0 0 10px 0; }
+
+.scanner-laser {
+    position: absolute;
+    left: 8%; right: 8%; top: 12%;
+    height: 2px;
+    background: var(--danger);
+    box-shadow: 0 0 14px 2px var(--danger);
+    animation: scannerSweep 2s ease-in-out infinite;
+}
+
+@keyframes scannerSweep {
+    0%, 100% { top: 13%; opacity: 1; }
+    50% { top: 87%; opacity: 0.5; }
+}
+
+.scanner-status {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 18px 20px max(20px, env(safe-area-inset-bottom));
+    background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+    text-align: center;
+    color: #fff;
+    z-index: 3;
+}
+
+.scanner-status .hint {
+    font-size: 13px;
+    color: rgba(255,255,255,0.75);
+}
+
+.scanner-status .result-line {
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    min-height: 20px;
+}
+
+.scanner-status .result-line.ok { color: var(--success); }
+.scanner-status .result-line.err { color: var(--danger); }
+
+.scanner-fallback {
+    padding: 40px 24px;
+    text-align: center;
+    color: #fff;
+}
+
+.scanner-fallback p { color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 8px; line-height: 1.5; }
+
 .product-info-bar {
     height: 40px;
     padding: 0 18px;
@@ -404,6 +625,8 @@ html, body {
 .products-list {
     max-height: calc(100vh - 240px);
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
 }
 
 /* ===== PRODUCT CARDS MEJORADAS ===== */
@@ -534,6 +757,7 @@ html, body {
     position: sticky;
     top: 24px;
     overflow: hidden;
+    box-shadow: var(--shadow-sm);
 }
 
 .cart-header {
@@ -562,6 +786,7 @@ html, body {
 .cart-items {
     max-height: 380px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .empty-cart {
@@ -782,6 +1007,7 @@ html, body {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.7);
+    -webkit-backdrop-filter: blur(2px);
     backdrop-filter: blur(2px);
     z-index: 90;
     display: none;
@@ -812,6 +1038,7 @@ html, body {
     overflow-y: auto;
     flex: 1;
     max-height: 45vh;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* ===== MODAL ===== */
@@ -819,6 +1046,7 @@ html, body {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.8);
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     display: none;
     align-items: center;
@@ -1066,6 +1294,7 @@ html, body {
     opacity: 0;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
     pointer-events: auto;
+    -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
     border-left: 4px solid var(--primary);
 }
@@ -1165,6 +1394,10 @@ html, body {
     display: block;
 }
 
+.settings-card + .settings-card {
+    margin-top: 20px;
+}
+
 .settings-card {
     background: var(--panel);
     border: 1px solid var(--border);
@@ -1234,6 +1467,38 @@ html, body {
     box-shadow: 0 4px 16px rgba(84,184,176,0.3);
 }
 
+.settings-secondary-btn {
+    height: 46px;
+    padding: 0 28px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s var(--ease);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-secondary-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.settings-secondary-btn:active {
+    transform: scale(0.98);
+}
+
+.settings-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+}
+
 .business-name-preview {
     margin-top: 20px;
     padding: 16px 20px;
@@ -1263,6 +1528,12 @@ html, body {
 
 .view-section.active {
     display: block;
+    animation: viewFadeIn 0.28s var(--ease);
+}
+
+@keyframes viewFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* ===== INVENTORY VIEW MEJORADO ===== */
@@ -1877,12 +2148,17 @@ body.sidebar-open { overflow: hidden; }
                 <section class="products-panel">
                     <div class="products-top">
                         <div class="search-box">
-                            <span class="search-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                            </span>
-                            <input type="text" id="searchInput" placeholder="Buscar por nombre, código o SKU..." autocomplete="off">
-                            <button class="clear-search" id="clearSearch" onclick="clearSearch()">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            <div class="search-input-wrap">
+                                <span class="search-icon">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                </span>
+                                <input type="text" id="searchInput" placeholder="Buscar por nombre, código o SKU..." autocomplete="off">
+                                <button class="clear-search" id="clearSearch" onclick="clearSearch()">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                            </div>
+                            <button class="scan-btn" id="scanBtn" onclick="openScanner()" aria-label="Escanear código de barras" title="Escanear código de barras">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="7" y2="12.01"/><line x1="10" y1="8" x2="10" y2="16"/><line x1="13" y1="8" x2="13" y2="16"/><line x1="16" y1="8" x2="16" y2="16"/></svg>
                             </button>
                         </div>
                     </div>
@@ -2015,8 +2291,24 @@ body.sidebar-open { overflow: hidden; }
                     <strong id="previewBusinessName">StockPro</strong>
                 </div>
             </div>
-        </div>
 
+            <div class="settings-card">
+                <h2>🖥️ Sistema</h2>
+                <p class="sub">Mantenimiento y estado de la aplicación</p>
+
+                <button class="settings-secondary-btn" onclick="hardRefreshApp()">
+                    🔄 Refrescar página completa
+                </button>
+
+                <div class="settings-divider"></div>
+
+                <p style="color:var(--muted); font-size:12px; line-height:1.6;">
+                    Usa esta opción si la aplicación se ve desactualizada, con errores visuales, o si el escáner de cámara deja de responder.
+                    Se recargará la página desde cero.<br>
+                    <strong style="color:var(--warning);">Nota:</strong> la venta en curso en el carrito no se guarda automáticamente y se perderá.
+                </p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -2092,6 +2384,28 @@ body.sidebar-open { overflow: hidden; }
 
             <button class="confirm-btn" onclick="confirmSale()">✅ Confirmar Venta</button>
         </div>
+    </div>
+</div>
+
+<!-- ===== BARCODE SCANNER MODAL ===== -->
+<div class="scanner-modal" id="scannerModal">
+    <div class="scanner-topbar">
+        <h3>📷 Escanear código de barras</h3>
+        <button onclick="closeScanner()" aria-label="Cerrar escáner">✕</button>
+    </div>
+    <div class="scanner-viewport" id="scannerViewport">
+        <video id="scannerVideo" autoplay playsinline muted></video>
+        <div class="scanner-laser" id="scannerLaser"></div>
+        <div class="scanner-frame">
+            <span class="scanner-corner tl"></span>
+            <span class="scanner-corner tr"></span>
+            <span class="scanner-corner bl"></span>
+            <span class="scanner-corner br"></span>
+        </div>
+    </div>
+    <div class="scanner-status">
+        <div class="hint" id="scannerHint">Apunta la cámara al código de barras del producto</div>
+        <div class="result-line" id="scannerResult"></div>
     </div>
 </div>
 
@@ -2192,6 +2506,7 @@ function navigateTo(view) {
     if (navLink) navLink.classList.add('active');
 
     closeSidebar();
+    closeScanner();
 
     if (view === 'home') updateHomeStats();
     if (view === 'inventory') { renderInventory(); filterInventory(); }
@@ -2214,6 +2529,32 @@ function saveBusinessName() {
     localStorage.setItem('businessName', newName);
     updateBusinessNameUI();
     showToast('✅ Negocio Actualizado', `Nombre cambiado a: "${newName}"`, 'success', 3000);
+}
+
+// ===== SISTEMA: REFRESCAR PÁGINA COMPLETA =====
+async function hardRefreshApp() {
+    const hasCartItems = cart.length > 0;
+    const msg = hasCartItems
+        ? '¿Refrescar toda la aplicación? Tienes una venta en curso que se perderá.'
+        : '¿Refrescar toda la aplicación? La página se recargará por completo.';
+
+    if (!confirm(msg)) return;
+
+    try {
+        if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+        }
+        if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.unregister()));
+        }
+    } catch (e) { /* limpieza best-effort, no bloquea el refresco */ }
+
+    // Cache-busting: fuerza a que el navegador vuelva a pedir todos los recursos
+    const url = new URL(window.location.href);
+    url.searchParams.set('_r', Date.now());
+    window.location.replace(url.toString());
 }
 
 // ===== MONEY FORMAT =====
@@ -2336,6 +2677,119 @@ function clearSearch() {
     searchInput.value = "";
     clearSearchButton.style.display = "none";
     renderProducts();
+}
+
+// ===== BARCODE SCANNER (cámara) =====
+let zxingReader = null;
+let scannerActive = false;
+let scannerLastCode = null;
+let scannerLastTime = 0;
+let scannerAudioCtx = null;
+
+function scannerBeep(ok) {
+    try {
+        if (!scannerAudioCtx) scannerAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (scannerAudioCtx.state === 'suspended') scannerAudioCtx.resume();
+        const osc = scannerAudioCtx.createOscillator();
+        const gain = scannerAudioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(ok ? 920 : 300, scannerAudioCtx.currentTime);
+        gain.gain.setValueAtTime(0.14, scannerAudioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, scannerAudioCtx.currentTime + (ok ? 0.14 : 0.22));
+        osc.connect(gain);
+        gain.connect(scannerAudioCtx.destination);
+        osc.start();
+        osc.stop(scannerAudioCtx.currentTime + (ok ? 0.14 : 0.22));
+    } catch (e) { /* audio not critical */ }
+}
+
+function ensureZxingReader() {
+    if (!zxingReader) {
+        if (typeof ZXing === 'undefined') return null;
+        zxingReader = new ZXing.BrowserMultiFormatReader();
+    }
+    return zxingReader;
+}
+
+async function openScanner() {
+    const modal = document.getElementById('scannerModal');
+    const viewport = document.getElementById('scannerViewport');
+    const resultEl = document.getElementById('scannerResult');
+    const hintEl = document.getElementById('scannerHint');
+
+    resultEl.textContent = '';
+    resultEl.className = 'result-line';
+    hintEl.textContent = 'Apunta la cámara al código de barras del producto';
+    modal.classList.add('active');
+    document.body.classList.add('sidebar-open'); // reuse existing overflow:hidden rule
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        viewport.innerHTML = `
+            <div class="scanner-fallback">
+                <strong>Cámara no disponible</strong>
+                <p>Este navegador no permite acceder a la cámara desde esta página.<br>Verifica que estés usando HTTPS o escribe el código manualmente en el buscador.</p>
+            </div>`;
+        return;
+    }
+
+    const reader = ensureZxingReader();
+    if (!reader) {
+        showToast('Escáner no disponible', 'No se pudo cargar el módulo de escaneo. Verifica tu conexión a internet.', 'error', 5000);
+        closeScanner();
+        return;
+    }
+
+    try {
+        const constraints = { video: { facingMode: { ideal: 'environment' } } };
+        await reader.decodeFromConstraints(constraints, 'scannerVideo', (result, err) => {
+            if (result) handleScannedCode(result.getText());
+        });
+        scannerActive = true;
+    } catch (err) {
+        console.error('Scanner error:', err);
+        viewport.innerHTML = `
+            <div class="scanner-fallback">
+                <strong>No se pudo abrir la cámara</strong>
+                <p>Verifica que hayas dado permiso de cámara al navegador y que estés navegando por HTTPS.<br>También puedes escribir el código manualmente en el buscador.</p>
+            </div>`;
+        showToast('Cámara no disponible', 'No se pudo iniciar el escáner de códigos.', 'error', 5000);
+    }
+}
+
+function closeScanner() {
+    const modal = document.getElementById('scannerModal');
+    modal.classList.remove('active');
+    document.body.classList.remove('sidebar-open');
+    scannerActive = false;
+    scannerLastCode = null;
+    if (zxingReader) {
+        try { zxingReader.reset(); } catch (e) {}
+    }
+}
+
+function handleScannedCode(code) {
+    const now = Date.now();
+    // Evita procesar el mismo código repetidamente mientras sigue en el encuadre
+    if (code === scannerLastCode && (now - scannerLastTime) < 1500) return;
+    scannerLastCode = code;
+    scannerLastTime = now;
+
+    const resultEl = document.getElementById('scannerResult');
+    const match = products.find(p => p.barcode === code || normalizeText(p.sku) === normalizeText(code));
+
+    if (match) {
+        scannerBeep(true);
+        resultEl.className = 'result-line ok';
+        resultEl.textContent = `✅ ${match.name}`;
+        addToCart(match.id);
+        searchInput.value = match.barcode;
+        clearSearchButton.style.display = 'flex';
+        renderProducts(products.filter(p => p.id === match.id));
+    } else {
+        scannerBeep(false);
+        resultEl.className = 'result-line err';
+        resultEl.textContent = `⚠️ Código "${code}" no está registrado`;
+    }
 }
 
 // ===== CART =====
@@ -2776,7 +3230,12 @@ document.addEventListener("keydown", function(e) {
     if (e.key === "Escape") {
         closePayment();
         closeMobileCart();
+        closeScanner();
     }
+});
+
+document.addEventListener("visibilitychange", function() {
+    if (document.hidden && scannerActive) closeScanner();
 });
 
 // ===== INIT =====
