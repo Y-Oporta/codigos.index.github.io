@@ -1118,8 +1118,14 @@ button:focus-visible, .product:focus-visible {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.2s;
+    transition: color 0.2s, background 0.2s;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
+
+.close-modal:active { background: var(--panel2); }
 
 .close-modal:hover {
     color: var(--text);
@@ -1170,7 +1176,9 @@ button:focus-visible, .product:focus-visible {
 }
 
 .payment-method {
-    height: 42px;
+    min-height: 42px;
+    height: auto;
+    padding: 6px 4px;
     background: var(--input);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
@@ -1178,6 +1186,12 @@ button:focus-visible, .product:focus-visible {
     cursor: pointer;
     font-size: 12px;
     font-weight: 600;
+    line-height: 1.25;
+    white-space: normal;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     transition: all 0.2s;
 }
 
@@ -1439,6 +1453,51 @@ button:focus-visible, .product:focus-visible {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px;
+}
+
+.input-with-btn {
+    display: flex;
+    gap: 8px;
+}
+
+.input-with-btn input {
+    flex: 1;
+    min-width: 0;
+}
+
+.scan-inline-btn {
+    flex-shrink: 0;
+    height: 46px;
+    padding: 0 14px;
+    background: var(--primary-soft);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 12.5px;
+    transition: all 0.2s var(--ease);
+    white-space: nowrap;
+}
+
+.scan-inline-btn svg { width: 17px; height: 17px; flex-shrink: 0; }
+
+.scan-inline-btn:hover {
+    background: var(--primary);
+    color: var(--on-primary);
+}
+
+.scan-inline-btn:active {
+    transform: scale(0.96);
+}
+
+/* En pantallas angostas el botón se vuelve ícono-only para no romper el layout */
+@media (max-width: 520px) {
+    .scan-inline-btn span { display: none; }
+    .scan-inline-btn { width: 46px; padding: 0; justify-content: center; }
 }
 
 @media (max-width: 480px) {
@@ -1849,26 +1908,76 @@ button:focus-visible, .product:focus-visible {
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .inventory-table .status-badge.in-stock {
-    background: rgba(97, 197, 138, 0.15);
+    background: var(--success-soft);
     color: var(--success);
 }
 
 .inventory-table .status-badge.low-stock {
-    background: rgba(226, 176, 79, 0.15);
+    background: var(--warning-soft);
     color: var(--warning);
 }
 
 .inventory-table .status-badge.out-stock {
-    background: rgba(229, 107, 111, 0.15);
+    background: var(--danger-soft);
     color: var(--danger);
 }
 
 .inventory-table .status-badge.expired {
-    background: rgba(229, 107, 111, 0.15);
+    background: var(--danger-soft);
     color: var(--danger);
+}
+
+.inventory-table .category-tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--panel2);
+    border: 1px solid var(--border);
+}
+
+.inventory-table th.col-actions,
+.inventory-table td.col-actions {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.row-actions {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.row-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s var(--ease);
+}
+
+.row-action-btn svg { width: 15px; height: 15px; }
+
+.row-action-btn:hover {
+    color: var(--text);
+    border-color: var(--border-strong);
+}
+
+.row-action-btn.danger:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: var(--danger-soft);
 }
 
 .inventory-table .expiration-cell {
@@ -1899,6 +2008,179 @@ button:focus-visible, .product:focus-visible {
 
 .inventory-table .stock-number.normal {
     color: var(--success);
+}
+
+/* ===== TARJETAS DE INVENTARIO (móvil) ===== */
+.inventory-cards {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.product-card-mobile {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+}
+
+.pcm-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.pcm-head .pcm-name {
+    font-weight: 700;
+    font-size: 14.5px;
+    line-height: 1.35;
+}
+
+.pcm-head .pcm-sub {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.pcm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 14px;
+    padding: 10px 0;
+    border-top: 1px dashed var(--border);
+    border-bottom: 1px dashed var(--border);
+    margin-bottom: 12px;
+}
+
+.pcm-field .pcm-label {
+    display: block;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--muted-dim);
+    margin-bottom: 2px;
+}
+
+.pcm-field .pcm-value {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.pcm-field .pcm-value.danger { color: var(--danger); }
+.pcm-field .pcm-value.warning { color: var(--warning); }
+.pcm-field .pcm-value.success { color: var(--success); }
+
+.pcm-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.pcm-actions button {
+    flex: 1;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--panel2);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s var(--ease);
+}
+
+.pcm-actions button svg { width: 15px; height: 15px; }
+
+.pcm-actions button:active { transform: scale(0.97); }
+
+.pcm-actions .pcm-edit:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.pcm-actions .pcm-delete:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: var(--danger-soft);
+}
+
+/* ===== PAGINACIÓN ===== */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 18px;
+}
+
+.pagination button {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.2s var(--ease);
+}
+
+.pagination button:hover:not(:disabled):not(.active) {
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+
+.pagination button.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+    cursor: default;
+}
+
+.pagination button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.pagination button svg { width: 14px; height: 14px; }
+
+.pagination .pagination-ellipsis {
+    min-width: 24px;
+    text-align: center;
+    color: var(--muted-dim);
+    font-size: 13px;
+    user-select: none;
+}
+
+.pagination-info {
+    width: 100%;
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-bottom: 2px;
+}
+
+@media (max-width: 480px) {
+    .pagination button {
+        min-width: 34px;
+        height: 34px;
+        padding: 0 8px;
+        font-size: 12px;
+    }
+    .pagination button span.pg-label { display: none; }
 }
 
 /* ===== HOME VIEW ===== */
@@ -2096,6 +2378,38 @@ button:focus-visible, .product:focus-visible {
     .inventory-filters input {
         flex: 1;
         min-width: 100px;
+    }
+
+    /* Tabla completa -> tarjetas verticales, sin scroll horizontal */
+    .inventory-table-wrap {
+        display: none;
+    }
+    .inventory-cards {
+        display: flex;
+    }
+
+    /* Objetivos táctiles más grandes para controles de cantidad y quitar artículo */
+    .quantity-control button {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+    .quantity {
+        width: 38px;
+        height: 36px;
+        font-size: 13px;
+    }
+    .remove-btn {
+        padding: 6px 4px;
+        font-size: 13px;
+    }
+    .payment-methods {
+        gap: 10px;
+    }
+    .payment-method {
+        min-height: 46px;
+        height: auto;
+        font-size: 13px;
     }
 }
 
@@ -2395,15 +2709,22 @@ body.sidebar-open { overflow: hidden; }
                         <tr>
                             <th class="sortable" onclick="sortInventory('name')">Producto <span class="sort-icon" id="sort-name">⇅</span></th>
                             <th class="sortable" onclick="sortInventory('sku')">Código <span class="sort-icon" id="sort-sku">⇅</span></th>
+                            <th>Categoría</th>
                             <th class="sortable" onclick="sortInventory('price')">Precio <span class="sort-icon" id="sort-price">⇅</span></th>
                             <th class="sortable" onclick="sortInventory('stock')">Stock <span class="sort-icon" id="sort-stock">⇅</span></th>
                             <th>Estado</th>
                             <th class="sortable" onclick="sortInventory('expiration')">Vencimiento <span class="sort-icon" id="sort-expiration">⇅</span></th>
+                            <th class="col-actions">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="inventoryBody"></tbody>
                 </table>
             </div>
+
+            <!-- Tarjetas para móvil: mismo contenido, sin scroll horizontal -->
+            <div class="inventory-cards" id="inventoryCards"></div>
+
+            <div class="pagination" id="inventoryPagination"></div>
         </div>
 
         <!-- ===== HISTORIAL DE VENTAS ===== -->
@@ -2438,6 +2759,8 @@ body.sidebar-open { overflow: hidden; }
                     <tbody id="historyBody"></tbody>
                 </table>
             </div>
+
+            <div class="inventory-cards" id="historyCards"></div>
         </div>
 
         <!-- ===== SETTINGS VIEW ===== -->
@@ -2559,7 +2882,7 @@ body.sidebar-open { overflow: hidden; }
 <div class="modal" id="productModal">
     <div class="modal-box">
         <div class="modal-header">
-            <h2>Agregar producto</h2>
+            <h2 id="productModalTitle">Agregar producto</h2>
             <button class="close-modal" onclick="closeProductModal()" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
         </div>
 
@@ -2587,7 +2910,13 @@ body.sidebar-open { overflow: hidden; }
                 </div>
                 <div class="settings-group">
                     <label for="newProductBarcode">Código de barras</label>
-                    <input type="text" id="newProductBarcode" placeholder="Ej: 750100000009" inputmode="numeric">
+                    <div class="input-with-btn">
+                        <input type="text" id="newProductBarcode" placeholder="Ej: 750100000009" inputmode="numeric">
+                        <button type="button" class="scan-inline-btn" onclick="openScanner('product')" title="Escanear código con la cámara">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><line x1="7" y1="12" x2="7" y2="12.01"/><line x1="10" y1="8" x2="10" y2="16"/><line x1="13" y1="8" x2="13" y2="16"/><line x1="16" y1="8" x2="16" y2="16"/></svg>
+                            <span>Escanear código</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -2607,7 +2936,7 @@ body.sidebar-open { overflow: hidden; }
                 <input type="month" id="newProductExpiration">
             </div>
 
-            <button class="confirm-btn" onclick="saveNewProduct()">Guardar producto</button>
+            <button class="confirm-btn" id="productModalSaveBtn" onclick="saveNewProduct()">Guardar producto</button>
         </div>
     </div>
 </div>
@@ -2615,8 +2944,8 @@ body.sidebar-open { overflow: hidden; }
 <!-- ===== BARCODE SCANNER MODAL ===== -->
 <div class="scanner-modal" id="scannerModal">
     <div class="scanner-topbar">
-        <h3>Escanear código de barras</h3>
-        <button onclick="closeScanner()" aria-label="Cerrar escáner"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <h3 id="scannerTitle">Escanear código de barras</h3>
+        <button onclick="closeScanner()" aria-label="Cancelar escaneo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="scanner-viewport" id="scannerViewport">
         <video id="scannerVideo" autoplay playsinline muted></video>
@@ -2717,6 +3046,19 @@ let selectedPayment = "Efectivo";
 let businessName = localStorage.getItem('businessName') || 'StockPro';
 let inventorySortField = 'name';
 let inventorySortAsc = true;
+let inventoryPage = 1;
+
+// Deriva una "categoría" legible a partir del prefijo del SKU (ej. "MED-001" -> "MED"),
+// sin necesidad de agregar un campo nuevo a los productos existentes.
+function getCategoryLabel(product) {
+    if (!product.sku) return 'General';
+    const prefix = product.sku.split('-')[0];
+    return prefix ? prefix.toUpperCase() : 'General';
+}
+
+function getInventoryPageSize() {
+    return window.innerWidth <= 850 ? 6 : 10;
+}
 
 // ===== TOAST SYSTEM =====
 function showToast(title, message, type = 'info', duration = 4000) {
@@ -2979,10 +3321,11 @@ function clearSearch() {
 }
 
 // ===== BARCODE SCANNER (cámara) =====
+// Escáner de un solo uso: se abre, detecta UN código, actúa según el modo, y se cierra solo.
 let zxingReader = null;
 let scannerActive = false;
-let scannerLastCode = null;
-let scannerLastTime = 0;
+let scannerMode = 'sale'; // 'sale' (Venta) | 'product' (registro de producto)
+let scanLocked = false;   // evita procesar más de un código por sesión de cámara
 let scannerAudioCtx = null;
 
 function scannerBeep(ok) {
@@ -3010,23 +3353,43 @@ function ensureZxingReader() {
     return zxingReader;
 }
 
-async function openScanner() {
-    const modal = document.getElementById('scannerModal');
+// Restaura el video/marco original del visor (por si quedó un mensaje de error de una sesión previa)
+function resetScannerViewport() {
     const viewport = document.getElementById('scannerViewport');
+    viewport.innerHTML = `
+        <video id="scannerVideo" autoplay playsinline muted></video>
+        <div class="scanner-laser" id="scannerLaser"></div>
+        <div class="scanner-frame">
+            <span class="scanner-corner tl"></span>
+            <span class="scanner-corner tr"></span>
+            <span class="scanner-corner bl"></span>
+            <span class="scanner-corner br"></span>
+        </div>`;
+}
+
+// mode: 'sale' -> busca el producto y lo agrega a la venta. 'product' -> llena el campo de código del formulario.
+async function openScanner(mode = 'sale') {
+    scannerMode = mode;
+    scanLocked = false;
+
+    const modal = document.getElementById('scannerModal');
     const resultEl = document.getElementById('scannerResult');
     const hintEl = document.getElementById('scannerHint');
+    const titleEl = document.getElementById('scannerTitle');
 
+    resetScannerViewport();
     resultEl.textContent = '';
     resultEl.className = 'result-line';
     hintEl.textContent = 'Apunta la cámara al código de barras del producto';
+    titleEl.textContent = mode === 'product' ? 'Escanear código de producto' : 'Escanear producto';
     modal.classList.add('active');
-    document.body.classList.add('sidebar-open'); // reuse existing overflow:hidden rule
+    document.body.classList.add('sidebar-open'); // reutiliza la regla existente de overflow:hidden
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        viewport.innerHTML = `
+        document.getElementById('scannerViewport').innerHTML = `
             <div class="scanner-fallback">
                 <strong>Cámara no disponible</strong>
-                <p>Este navegador no permite acceder a la cámara desde esta página.<br>Verifica que estés usando HTTPS o escribe el código manualmente en el buscador.</p>
+                <p>Este navegador o dispositivo no permite acceder a la cámara desde esta página.<br>Verifica que estés usando HTTPS, o escribe el código manualmente.</p>
             </div>`;
         return;
     }
@@ -3046,10 +3409,10 @@ async function openScanner() {
         scannerActive = true;
     } catch (err) {
         console.error('Scanner error:', err);
-        viewport.innerHTML = `
+        document.getElementById('scannerViewport').innerHTML = `
             <div class="scanner-fallback">
                 <strong>No se pudo abrir la cámara</strong>
-                <p>Verifica que hayas dado permiso de cámara al navegador y que estés navegando por HTTPS.<br>También puedes escribir el código manualmente en el buscador.</p>
+                <p>Verifica que hayas dado permiso de cámara al navegador y que estés navegando por HTTPS.<br>También puedes escribir el código manualmente.</p>
             </div>`;
         showToast('Cámara no disponible', 'No se pudo iniciar el escáner de códigos.', 'error', 5000);
     }
@@ -3060,34 +3423,41 @@ function closeScanner() {
     modal.classList.remove('active');
     document.body.classList.remove('sidebar-open');
     scannerActive = false;
-    scannerLastCode = null;
     if (zxingReader) {
         try { zxingReader.reset(); } catch (e) {}
     }
 }
 
+// Un solo código por sesión de cámara: al primer resultado válido, actúa y cierra.
 function handleScannedCode(code) {
-    const now = Date.now();
-    // Evita procesar el mismo código repetidamente mientras sigue en el encuadre
-    if (code === scannerLastCode && (now - scannerLastTime) < 1500) return;
-    scannerLastCode = code;
-    scannerLastTime = now;
+    if (scanLocked) return;
+    scanLocked = true;
 
-    const resultEl = document.getElementById('scannerResult');
+    if (scannerMode === 'product') {
+        const barcodeInput = document.getElementById('newProductBarcode');
+        const existing = products.find(p => p.barcode === code && p.id !== editingProductId);
+        scannerBeep(true);
+        if (barcodeInput) barcodeInput.value = code;
+        closeScanner();
+        if (existing) {
+            showToast('Código ya registrado', `Este código pertenece a "${existing.name}". Verifica antes de guardar.`, 'warning', 5000);
+        } else {
+            showToast('Código detectado', `Se colocó el código ${code} en el formulario.`, 'success', 3000);
+        }
+        return;
+    }
+
+    // Modo Venta (por defecto): busca el producto y lo agrega automáticamente
     const match = products.find(p => p.barcode === code || normalizeText(p.sku) === normalizeText(code));
 
     if (match) {
         scannerBeep(true);
-        resultEl.className = 'result-line ok';
-        resultEl.textContent = match.name;
         addToCart(match.id);
-        searchInput.value = match.barcode;
-        clearSearchButton.style.display = 'flex';
-        renderProducts(products.filter(p => p.id === match.id));
+        closeScanner();
     } else {
         scannerBeep(false);
-        resultEl.className = 'result-line err';
-        resultEl.textContent = `Código "${code}" no está registrado`;
+        closeScanner();
+        showToast('Producto no encontrado', `No hay ningún producto registrado con el código "${code}".`, 'error', 4500);
     }
 }
 
@@ -3407,11 +3777,10 @@ function renderInventory() {
     updateInventoryBadge();
 }
 
-function filterInventory() {
+function filterInventory(resetPage = true) {
     const searchTerm = normalizeText(document.getElementById('inventorySearchInput').value.trim());
     const statusFilter = document.getElementById('inventoryStatusFilter').value;
-    const tbody = document.getElementById('inventoryBody');
-    
+
     // Ordenar productos
     let sorted = [...products];
     sorted.sort((a, b) => {
@@ -3426,52 +3795,64 @@ function filterInventory() {
 
     // Filtrar
     const filtered = sorted.filter(p => {
-        const matchesSearch = 
+        const matchesSearch =
             normalizeText(p.name).includes(searchTerm) ||
             normalizeText(p.sku).includes(searchTerm) ||
-            normalizeText(p.active).includes(searchTerm);
-        
+            normalizeText(p.active).includes(searchTerm) ||
+            normalizeText(getCategoryLabel(p)).includes(searchTerm);
+
         let matchesStatus = true;
         if (statusFilter === 'in-stock') matchesStatus = p.stock > 10 && !p.isExpired;
         else if (statusFilter === 'low-stock') matchesStatus = p.stock > 0 && p.stock <= 10 && !p.isExpired;
         else if (statusFilter === 'out-stock') matchesStatus = p.stock === 0 && !p.isExpired;
         else if (statusFilter === 'expired') matchesStatus = p.isExpired;
-        
+
         return matchesSearch && matchesStatus;
     });
 
-    tbody.innerHTML = '';
+    if (resetPage) inventoryPage = 1;
+    renderInventoryResults(filtered);
+}
+
+function renderInventoryResults(filtered) {
+    const tbody = document.getElementById('inventoryBody');
+    const cardsWrap = document.getElementById('inventoryCards');
 
     if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted);">No se encontraron productos que coincidan con los filtros.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);">No se encontraron productos que coincidan con los filtros.</td></tr>`;
+        cardsWrap.innerHTML = `<div class="empty-cart" style="background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-md);"><p>No se encontraron productos que coincidan con los filtros.</p></div>`;
+        renderInventoryPagination(0, 1);
         return;
     }
 
-    filtered.forEach(p => {
-        let statusClass = 'in-stock';
-        let statusText = 'En stock';
-        let stockClass = 'normal';
-        
-        if (p.isExpired) { 
-            statusClass = 'expired'; 
-            statusText = 'Vencido';
-            stockClass = 'out';
-        } else if (p.stock === 0) { 
-            statusClass = 'out-stock'; 
-            statusText = 'Agotado';
-            stockClass = 'out';
-        } else if (p.stock <= 10) { 
-            statusClass = 'low-stock'; 
-            statusText = 'Bajo stock';
-            stockClass = 'low';
-        }
+    const pageSize = getInventoryPageSize();
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    if (inventoryPage > totalPages) inventoryPage = totalPages;
+    if (inventoryPage < 1) inventoryPage = 1;
+    const start = (inventoryPage - 1) * pageSize;
+    const pageItems = filtered.slice(start, start + pageSize);
 
-        let expirationClass = '';
-        if (p.isExpired) expirationClass = 'expired';
-        else if (p.isWarning) expirationClass = 'warning';
+    tbody.innerHTML = pageItems.map(p => buildInventoryRow(p)).join('');
+    cardsWrap.innerHTML = pageItems.map(p => buildInventoryCard(p)).join('');
 
-        const row = document.createElement('tr');
-        row.innerHTML = `
+    renderInventoryPagination(filtered.length, totalPages);
+}
+
+function getProductStatus(p) {
+    if (p.isExpired) return { cls: 'expired', text: 'Vencido', stockCls: 'out' };
+    if (p.stock === 0) return { cls: 'out-stock', text: 'Agotado', stockCls: 'out' };
+    if (p.stock <= 10) return { cls: 'low-stock', text: 'Bajo stock', stockCls: 'low' };
+    return { cls: 'in-stock', text: 'En stock', stockCls: 'normal' };
+}
+
+function buildInventoryRow(p) {
+    const status = getProductStatus(p);
+    let expirationClass = '';
+    if (p.isExpired) expirationClass = 'expired';
+    else if (p.isWarning) expirationClass = 'warning';
+
+    return `
+        <tr>
             <td>
                 <div class="product-cell">
                     <span class="name">${p.name}</span>
@@ -3479,13 +3860,105 @@ function filterInventory() {
                 </div>
             </td>
             <td><code style="color:var(--muted);font-size:11px;">${p.sku}</code></td>
+            <td><span class="category-tag">${getCategoryLabel(p)}</span></td>
             <td>${money(p.price)}</td>
-            <td><span class="stock-number ${stockClass}">${p.stock}</span></td>
-            <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-            <td class="expiration-cell ${expirationClass}">${p.expiration}${p.isExpired ? ' · Vencido' : ''}</td>
-        `;
-        tbody.appendChild(row);
+            <td><span class="stock-number ${status.stockCls}">${p.stock}</span></td>
+            <td><span class="status-badge ${status.cls}">${status.text}</span></td>
+            <td class="expiration-cell ${expirationClass}">${p.expiration || '—'}${p.isExpired ? ' · Vencido' : ''}</td>
+            <td class="col-actions">
+                <div class="row-actions">
+                    <button class="row-action-btn" onclick="openProductModal(${p.id})" aria-label="Editar ${p.name}" title="Editar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z"/></svg>
+                    </button>
+                    <button class="row-action-btn danger" onclick="deleteProduct(${p.id})" aria-label="Eliminar ${p.name}" title="Eliminar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+}
+
+function buildInventoryCard(p) {
+    const status = getProductStatus(p);
+    let expValueClass = '';
+    if (p.isExpired) expValueClass = 'danger';
+    else if (p.isWarning) expValueClass = 'warning';
+
+    return `
+        <div class="product-card-mobile">
+            <div class="pcm-head">
+                <div>
+                    <div class="pcm-name">${p.name}</div>
+                    <div class="pcm-sub">${p.active}</div>
+                </div>
+                <span class="status-badge ${status.cls}">${status.text}</span>
+            </div>
+            <div class="pcm-grid">
+                <div class="pcm-field"><span class="pcm-label">Código</span><span class="pcm-value">${p.sku}</span></div>
+                <div class="pcm-field"><span class="pcm-label">Categoría</span><span class="pcm-value">${getCategoryLabel(p)}</span></div>
+                <div class="pcm-field"><span class="pcm-label">Precio</span><span class="pcm-value">${money(p.price)}</span></div>
+                <div class="pcm-field"><span class="pcm-label">Stock</span><span class="pcm-value ${status.stockCls === 'out' ? 'danger' : status.stockCls === 'low' ? 'warning' : 'success'}">${p.stock}</span></div>
+                <div class="pcm-field"><span class="pcm-label">Vencimiento</span><span class="pcm-value ${expValueClass}">${p.expiration || 'No aplica'}</span></div>
+            </div>
+            <div class="pcm-actions">
+                <button class="pcm-edit" onclick="openProductModal(${p.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z"/></svg>
+                    Editar
+                </button>
+                <button class="pcm-delete" onclick="deleteProduct(${p.id})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Eliminar
+                </button>
+            </div>
+        </div>`;
+}
+
+// Genera "← 1 2 3 4 5 →" o, con muchas páginas, "← 1 ... 4 5 6 ... 12 →"
+function renderInventoryPagination(totalItems, totalPages) {
+    const container = document.getElementById('inventoryPagination');
+
+    if (totalItems === 0 || totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const current = inventoryPage;
+    const pages = [];
+    const windowSize = 1; // páginas vecinas a mostrar a cada lado de la actual
+
+    pages.push(1);
+    for (let p = current - windowSize; p <= current + windowSize; p++) {
+        if (p > 1 && p < totalPages) pages.push(p);
+    }
+    pages.push(totalPages);
+
+    const uniquePages = [...new Set(pages)].sort((a, b) => a - b);
+
+    let html = `<button ${current === 1 ? 'disabled' : ''} onclick="goToInventoryPage(${current - 1})" aria-label="Página anterior">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span class="pg-label">Anterior</span>
+    </button>`;
+
+    let prevPage = 0;
+    uniquePages.forEach(p => {
+        if (p - prevPage > 1) {
+            html += `<span class="pagination-ellipsis">…</span>`;
+        }
+        html += `<button class="${p === current ? 'active' : ''}" onclick="goToInventoryPage(${p})" ${p === current ? 'aria-current="page"' : ''}>${p}</button>`;
+        prevPage = p;
     });
+
+    html += `<button ${current === totalPages ? 'disabled' : ''} onclick="goToInventoryPage(${current + 1})" aria-label="Página siguiente">
+        <span class="pg-label">Siguiente</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>`;
+
+    container.innerHTML = html;
+}
+
+function goToInventoryPage(page) {
+    inventoryPage = page;
+    filterInventory(false);
 }
 
 function sortInventory(field) {
@@ -3519,22 +3992,40 @@ function resetInventoryFilters() {
     filterInventory();
 }
 
-// ===== AGREGAR PRODUCTO =====
-function openProductModal() {
-    document.getElementById('newProductName').value = '';
-    document.getElementById('newProductActive').value = '';
-    document.getElementById('newProductPresentation').value = '';
-    document.getElementById('newProductSku').value = '';
-    document.getElementById('newProductBarcode').value = '';
-    document.getElementById('newProductPrice').value = '';
-    document.getElementById('newProductStock').value = '';
-    document.getElementById('newProductExpiration').value = '';
+// ===== AGREGAR / EDITAR PRODUCTO =====
+let editingProductId = null;
+
+function monthInputFromExpiration(expStr) {
+    // "MM/YYYY" -> "YYYY-MM" (formato que espera <input type="month">)
+    if (!expStr) return '';
+    const parts = expStr.split('/');
+    if (parts.length !== 2) return '';
+    return `${parts[1]}-${parts[0]}`;
+}
+
+function openProductModal(productId = null) {
+    editingProductId = productId;
+    const product = productId ? products.find(p => p.id === productId) : null;
+
+    document.getElementById('productModalTitle').textContent = product ? 'Editar producto' : 'Agregar producto';
+    document.getElementById('productModalSaveBtn').textContent = product ? 'Guardar cambios' : 'Guardar producto';
+
+    document.getElementById('newProductName').value = product ? product.name : '';
+    document.getElementById('newProductActive').value = product ? product.active : '';
+    document.getElementById('newProductPresentation').value = product && product.presentation !== '—' ? product.presentation : '';
+    document.getElementById('newProductSku').value = product ? product.sku : '';
+    document.getElementById('newProductBarcode').value = product ? product.barcode : '';
+    document.getElementById('newProductPrice').value = product ? product.price : '';
+    document.getElementById('newProductStock').value = product ? product.stock : '';
+    document.getElementById('newProductExpiration').value = product ? monthInputFromExpiration(product.expiration) : '';
+
     document.getElementById('productModal').classList.add('active');
     setTimeout(() => document.getElementById('newProductName').focus(), 100);
 }
 
 function closeProductModal() {
     document.getElementById('productModal').classList.remove('active');
+    editingProductId = null;
 }
 
 function saveNewProduct() {
@@ -3557,12 +4048,12 @@ function saveNewProduct() {
         document.getElementById('newProductSku').focus();
         return;
     }
-    if (products.some(p => normalizeText(p.sku) === normalizeText(sku))) {
+    if (products.some(p => normalizeText(p.sku) === normalizeText(sku) && p.id !== editingProductId)) {
         showToast('SKU duplicado', `Ya existe un producto con el SKU "${sku}".`, 'error', 4500);
         document.getElementById('newProductSku').focus();
         return;
     }
-    if (barcode && products.some(p => p.barcode === barcode)) {
+    if (barcode && products.some(p => p.barcode === barcode && p.id !== editingProductId)) {
         showToast('Código de barras duplicado', `Ya existe un producto con ese código de barras.`, 'error', 4500);
         document.getElementById('newProductBarcode').focus();
         return;
@@ -3584,31 +4075,63 @@ function saveNewProduct() {
         expiration = `${mm}/${yyyy}`;
     }
 
-    const nextId = products.reduce((max, p) => Math.max(max, p.id), 0) + 1;
-
-    products.push({
-        id: nextId,
-        name,
-        active: active || name,
-        presentation: presentation || '—',
-        sku,
-        barcode: barcode || `SIN-${nextId}`,
-        price,
-        stock,
-        expiration,
-        isExpired: false,
-        isWarning: false
-    });
-
-    refreshExpirationFlags();
-    saveProducts();
-    closeProductModal();
-    showToast('Producto agregado', `"${name}" se agregó al inventario.`, 'success', 3500);
+    if (editingProductId) {
+        const product = products.find(p => p.id === editingProductId);
+        Object.assign(product, {
+            name,
+            active: active || name,
+            presentation: presentation || '—',
+            sku,
+            barcode: barcode || product.barcode,
+            price,
+            stock,
+            expiration
+        });
+        refreshExpirationFlags();
+        saveProducts();
+        closeProductModal();
+        showToast('Cambios guardados', `"${name}" se actualizó correctamente.`, 'success', 3000);
+    } else {
+        const nextId = products.reduce((max, p) => Math.max(max, p.id), 0) + 1;
+        products.push({
+            id: nextId,
+            name,
+            active: active || name,
+            presentation: presentation || '—',
+            sku,
+            barcode: barcode || `SIN-${nextId}`,
+            price,
+            stock,
+            expiration,
+            isExpired: false,
+            isWarning: false
+        });
+        refreshExpirationFlags();
+        saveProducts();
+        closeProductModal();
+        showToast('Producto agregado', `"${name}" se agregó al inventario.`, 'success', 3500);
+    }
 
     renderInventory();
     filterInventory();
     updateHomeStats();
     if (document.getElementById('viewSales')?.classList.contains('active')) renderProducts();
+}
+
+function deleteProduct(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    if (!confirm(`¿Eliminar "${product.name}" del inventario? Esta acción no se puede deshacer.`)) return;
+
+    const index = products.findIndex(p => p.id === productId);
+    if (index !== -1) products.splice(index, 1);
+    saveProducts();
+
+    renderInventory();
+    filterInventory();
+    updateHomeStats();
+    if (document.getElementById('viewSales')?.classList.contains('active')) renderProducts();
+    showToast('Producto eliminado', `"${product.name}" se eliminó del inventario.`, 'info', 3000);
 }
 
 document.getElementById('productModal').addEventListener('click', function(e) {
@@ -3618,6 +4141,7 @@ document.getElementById('productModal').addEventListener('click', function(e) {
 // ===== HISTORIAL DE VENTAS =====
 function renderSalesHistory() {
     const tbody = document.getElementById('historyBody');
+    const cardsWrap = document.getElementById('historyCards');
     const sorted = [...salesHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     document.getElementById('histCount').textContent = salesHistory.length;
@@ -3626,6 +4150,7 @@ function renderSalesHistory() {
 
     if (sorted.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--muted);">Todavía no se ha registrado ninguna venta.</td></tr>`;
+        cardsWrap.innerHTML = `<div class="empty-cart" style="background:var(--panel); border:1px solid var(--border); border-radius:var(--radius-md);"><p>Todavía no se ha registrado ninguna venta.</p></div>`;
         return;
     }
 
@@ -3639,6 +4164,22 @@ function renderSalesHistory() {
                 <td>${itemCount} ${itemCount === 1 ? 'artículo' : 'artículos'}</td>
                 <td>${money(sale.total)}</td>
             </tr>`;
+    }).join('');
+
+    cardsWrap.innerHTML = sorted.map(sale => {
+        const itemCount = sale.items.reduce((sum, i) => sum + i.quantity, 0);
+        const dateStr = new Date(sale.date).toLocaleString('es-NI', { dateStyle: 'medium', timeStyle: 'short' });
+        return `
+            <div class="product-card-mobile">
+                <div class="pcm-head">
+                    <div>
+                        <div class="pcm-name">${money(sale.total)}</div>
+                        <div class="pcm-sub">${dateStr}</div>
+                    </div>
+                    <span class="category-tag">${sale.paymentMethod}</span>
+                </div>
+                <div class="pcm-field"><span class="pcm-label">Artículos</span><span class="pcm-value">${itemCount} ${itemCount === 1 ? 'artículo' : 'artículos'}</span></div>
+            </div>`;
     }).join('');
 }
 
@@ -3681,6 +4222,17 @@ document.addEventListener("keydown", function(e) {
 
 document.addEventListener("visibilitychange", function() {
     if (document.hidden && scannerActive) closeScanner();
+});
+
+// Recalcula el tamaño de página (móvil vs escritorio) si cambia el ancho de la ventana
+let inventoryResizeTimer = null;
+window.addEventListener("resize", function() {
+    clearTimeout(inventoryResizeTimer);
+    inventoryResizeTimer = setTimeout(() => {
+        if (document.getElementById('viewInventory')?.classList.contains('active')) {
+            filterInventory(false);
+        }
+    }, 200);
 });
 
 // ===== INIT =====
